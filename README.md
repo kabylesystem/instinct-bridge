@@ -77,7 +77,7 @@ The graphical interface provides Authy pairing and account selection. The CLI cu
 
 Use Python 3.13, install `.[iphone]` and `pyinstaller==6.22.3`, then run `python scripts/build_desktop.py`. Build on the oldest supported Linux distribution; a binary built on CachyOS may require a newer glibc than Ubuntu. The CI build uses Ubuntu 24.04. A SHA-256 checksum accompanies each artifact.
 
-The iPhone extra pins mitmproxy to an inspected upstream commit because the checked stable release constrained several dependencies to versions with published vulnerabilities. See [verification evidence](docs/evidence/2026-09-24-desktop.json). This remains experimental and needs maintenance.
+The iPhone extra pins mitmproxy to an inspected upstream commit because the checked stable release constrained several dependencies to versions with published vulnerabilities. See [verification evidence](docs/evidence/2026-09-24-desktop.json). The audit covers recognized dependency versions; it skips the unpublished mitmproxy snapshot and this local project. This remains experimental and needs maintenance.
 
 ## Community release
 

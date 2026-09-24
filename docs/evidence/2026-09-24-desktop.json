@@ -19,5 +19,9 @@
     "keys_received": 0,
     "actual_extraction_verified": false
   },
-  "real_source_accounts_migrated": false
+  "real_source_accounts_migrated": false,
+  "dependency_audit_skipped": [
+    "instinct-bridge 0.3.0 (local project)",
+    "mitmproxy 13.0.0.dev0 (pinned upstream snapshot, not on PyPI)"
+  ]
 }
