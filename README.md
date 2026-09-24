@@ -15,12 +15,13 @@ For the executable, download the `InstinctBridge-linux-x86_64` artifact from a s
 For a source installation with iPhone support, use Python 3.12 or newer:
 
 ```bash
+cd /path/to/instinct-bridge
 python3 -m venv .venv
 .venv/bin/pip install -e '.[iphone]'
-.venv/bin/instinct-bridge-ui
+.venv/bin/instinct-bridge-ui --open
 ```
 
-Open the private link printed in the terminal. The app binds to `127.0.0.1`; the CLI opens no browser unless you pass `--open`. The desktop executable opens the local interface automatically; `--no-open` disables this. Keep the terminal open. Sign in to [Instinct](https://app.instinct.com/vault) in your regular Brave profile before connecting.
+Run these commands **from the cloned repository**; the relative `.venv/bin/...` path also works when its parent directory contains spaces. In fish, quote any absolute path that contains spaces. The app binds to `127.0.0.1`; without `--open`, use the private link printed in the terminal. The desktop executable opens the local interface automatically; `--no-open` disables this. Keep the terminal open. Sign in to [Instinct](https://app.instinct.com/vault) in your regular Brave profile before connecting.
 
 1. Select a Bitwarden JSON export, or use Authy alone. Portable password-protected exports support PBKDF2 and Argon2id; account-restricted backups are rejected. Enter the **export password**, which stays local.
 2. Click **Connect Authy on iPhone** and follow the temporary certificate/proxy instructions on the phone. Compare the received key count with Authy, finish capture, remove the phone proxy/profile, then enter the backup password locally. Existing token JSON files also work. See the [iPhone guide](docs/authy-iphone.md).

@@ -23,3 +23,6 @@ Kusaila requested as few clicks as possible: the desktop executable includes dep
 
 ## Scope decision — 2026-09-25
 Kusaila prioritized the practical migration of logins, passwords and their sites over unsupported vault record types. The review table shows source title, hostname and username; a stable Bitwarden ID in the destination name distinguishes duplicate titles and enables later reimports. The full URL is not represented by Instinct's login schema, so the UI states this limitation before transfer. Avoid presenting partial metadata warnings as if they blocked a credential that is otherwise ready.
+
+## Launch usability — 2026-09-25
+The project lives under a directory containing a space. Give shell instructions as a short command available on `PATH`, or as a relative path after changing into the repository. Never give an unquoted absolute path with spaces as the primary launch command. Verify launch commands in Kusaila's actual fish shell before handing them over.
