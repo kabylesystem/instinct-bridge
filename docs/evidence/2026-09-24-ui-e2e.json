@@ -1,11 +1,12 @@
 {
-  "checked_at": "2026-09-24T20:26:35.936912+00:00",
+  "checked_at": "2026-09-24T21:26:13.317508+00:00",
   "data": "synthetic",
   "iphone_capture_tested": false,
   "demo_pairing": true,
   "demo_transfer_disabled": true,
   "mobile_no_overflow": true,
   "encrypted_upload_and_pairing": true,
+  "single_transfer_click": true,
   "live_transfer_verified": true,
   "repeat_skipped_and_verified": true,
   "browser_errors": [],

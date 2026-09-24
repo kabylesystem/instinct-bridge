@@ -92,3 +92,61 @@ class WebTests(unittest.TestCase):
         self.assertEqual(self.post('preview',{'bitwarden':'broken'}).status_code,400)
         self.assertEqual(self.post('transfer',self.transfer_payload(revision)).status_code,400)
         self.assertEqual(self.writes, [])
+
+    def test_authy_only_preview_binds_keys_without_guessing(self):
+        result=self.post('preview',{'authy':(FIXTURES/'authy-encrypted-synthetic.json').read_text(),'authy_password':'SYNTHETIC-export-password'})
+        self.assertEqual(result.status_code,200)
+        self.assertTrue(result.json['accounts'][0]['has_totp'])
+        self.assertEqual(result.json['authy'],[])
+        self.post('connect')
+        result=self.post('transfer',self.transfer_payload(result.json['revision']))
+        self.assertTrue(result.json['verified'])
+        self.assertEqual(self.writes[0].password,'')
+        self.assertIsNotNone(self.writes[0].totp)
+
+    def test_iphone_start_requires_explicit_capture_action(self):
+        result=self.post('iphone/start')
+        self.assertEqual(result.status_code,400)
+        self.assertFalse(self.app.extensions['authy_capture'].active)
+
+    def test_iphone_status_is_private_and_finish_requires_count(self):
+        capture=self.app.extensions['authy_capture']
+        token=json.loads((FIXTURES/'authy-encrypted-synthetic.json').read_text())['authenticator_tokens'][0]
+        capture.tokens[token['unique_id']]=token
+        status=self.post('iphone/status')
+        self.assertEqual(status.json['count'],1)
+        self.assertNotIn(token['encrypted_seed'],status.get_data(as_text=True))
+        self.assertEqual(self.post('iphone/finish',{'expected_count':2}).status_code,400)
+        self.assertEqual(self.post('iphone/finish',{'expected_count':1}).status_code,200)
+        result=self.post('preview',{'use_capture':True,'authy_password':'SYNTHETIC-export-password'})
+        self.assertEqual(result.status_code,200)
+        self.assertEqual(capture.tokens,{})
+
+    def test_wrong_capture_password_preserves_retry_input(self):
+        capture=self.app.extensions['authy_capture']
+        token=json.loads((FIXTURES/'authy-encrypted-synthetic.json').read_text())['authenticator_tokens'][0]
+        capture.tokens[token['unique_id']]=token
+        self.assertEqual(self.post('preview',{'use_capture':True,'authy_password':'wrong'}).status_code,400)
+        self.assertEqual(len(capture.tokens),1)
+        self.post('clear')
+        self.assertEqual(capture.tokens,{})
+
+    def test_quit_clears_loaded_keys_and_reminds_phone_cleanup(self):
+        revision = self.preview(True)
+        capture = self.app.extensions['authy_capture']
+        capture.tokens['test'] = {'encrypted_seed': 'private-test-value'}
+        capture.profile_downloaded = True
+        response = self.post('quit')
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json['phone_cleanup_required'])
+        self.assertEqual(capture.tokens, {})
+        self.assertTrue(self.app.config['STOP_EVICTION'])
+        self.assertEqual(self.post('transfer', self.transfer_payload(revision)).status_code, 400)
+
+    def test_demo_cannot_hide_pending_iphone_capture(self):
+        capture = self.app.extensions['authy_capture']
+        capture.tokens['test'] = {'encrypted_seed': 'private-test-value'}
+        self.assertEqual(self.post('demo').status_code, 400)
+        self.assertIn('test', capture.tokens)
+        self.post('iphone/discard')
+        self.assertEqual(self.post('demo').status_code, 200)

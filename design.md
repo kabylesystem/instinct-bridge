@@ -16,4 +16,7 @@ Typography: Noto Sans with a local sans-serif fallback, with 16px body, 40px pag
 Full-width header with small line mark; three numbered stages; two source panels; full-width account table; Authy mapping table; review/transfer action bar; inline progress and detailed result rows. Mobile stacks the sources and account rows. No decorative gradients, no emoji icons, no remote assets.
 
 ## Motion
-120ms color/opacity transitions; reduced-motion respected. No automatic focus or browser opening on launch.
+120ms color/opacity transitions; reduced-motion respected. CLI/tests never focus a personal browser; the user-launched desktop executable opens its local interface. Background destination work always uses an isolated headless browser.
+
+## Simplest supported flow
+Kusaila requested as few clicks as possible: the desktop executable includes dependencies; a single Transfer action connects and verifies. Authy can be used without a Bitwarden file. Phone setup is revealed only on request, with a QR, received-key count, explicit finish and cleanup reminder. iOS trust approvals cannot be represented as automatic. Quit stops the local server and releases its data.

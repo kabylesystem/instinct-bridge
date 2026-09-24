@@ -6,7 +6,9 @@
 - [x] Host, origin, token, stale-preview and destination-session guards.
 - [x] Strict conflict handling and read-back verification.
 - [x] Live graphical transfer of independently encrypted synthetic sources, repeat prevention and verified cleanup.
-- [x] Desktop/mobile visual checks, 28 unit tests and zero known dependency vulnerabilities in the checked environment.
+- [x] Desktop/mobile visual checks, 40 unit tests and zero known dependency vulnerabilities in the checked environment.
+- [x] Linux standalone executable: demo, capture lifecycle and real synthetic Instinct transfer.
+- [x] One transfer button connects, writes, verifies and skips identical repeats.
 - [ ] Validate initial extraction against a real Authy iPhone.
 - [ ] Compare migrated keys with codes in the actual Authy app and test real service logins.
 - [ ] Independently review security and confirm supported platforms.

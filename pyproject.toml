@@ -4,10 +4,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "instinct-bridge"
-version = "0.2.0"
+version = "0.3.0"
 description = "Local Bitwarden login and TOTP migration to Instinct"
 requires-python = ">=3.11"
-dependencies = ["playwright==1.63.0", "browser-cookie3==0.20.1", "cryptography==50.0.1", "argon2-cffi==25.1.0", "flask==3.1.3"]
+dependencies = ["playwright==1.63.0", "browser-cookie3==0.20.1", "cryptography==50.0.0", "argon2-cffi==25.1.0", "flask==3.1.3"]
+
+[project.optional-dependencies]
+iphone = ["mitmproxy @ https://github.com/mitmproxy/mitmproxy/archive/b506c68108e287104045333ade476d92c39c275e.tar.gz", "qrcode==8.2"]
 
 [project.scripts]
 instinct-bridge = "instinct_bridge.cli:main"

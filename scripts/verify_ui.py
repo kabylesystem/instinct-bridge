@@ -63,13 +63,10 @@ try:
         expect(page.locator('#authy-password')).to_have_value('')
         report['encrypted_upload_and_pairing']=True
         if args.live:
-            with page.expect_response(lambda r: r.url.endswith('/api/connect'), timeout=60000) as response:
-                page.locator('#connect').click()
-            assert response.value.ok, response.value.json().get('error', 'Connection failed')
-            expect(page.locator('#connection-state')).to_contain_text('Connected',timeout=60000)
-            page.locator('#acknowledge').check()
+            # The single transfer click connects, then writes and verifies.
             page.locator('#transfer').click()
-            expect(page.locator('#result-0')).to_have_text('Transferred & verified',timeout=60000)
+            expect(page.locator('#result-0')).to_have_text('Transferred & verified',timeout=90000)
+            report['single_transfer_click']=True
             report['live_transfer_verified']=True
             expect(page.locator('#transfer')).to_be_enabled(timeout=60000)
             page.locator('#transfer').click()

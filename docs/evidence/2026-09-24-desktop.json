@@ -1,0 +1,23 @@
+{
+  "checked_at": "2026-09-24T21:35:14.417448+00:00",
+  "platform": "CachyOS Linux x86_64",
+  "python": "3.13.14",
+  "version": "0.3.0",
+  "unit_tests_passed": 40,
+  "dependency_audit_findings": 0,
+  "mitmproxy_commit": "b506c68108e287104045333ade476d92c39c275e",
+  "packaged_live_synthetic_transfer": true,
+  "final_build_capture_start": true,
+  "final_build_quit_closes_server_port": true,
+  "desktop_and_mobile_review": true,
+  "binary_sha256": "fc68912af1809a2e96b95ebb4c0b8ce5fc34f4bc3cdd50a659e6884627e48b03",
+  "iphone": {
+    "ios": "26.6.1",
+    "authy": "28.6.2",
+    "usb_pairing_verified": true,
+    "sandbox_access": "InstallationLookupFailed",
+    "keys_received": 0,
+    "actual_extraction_verified": false
+  },
+  "real_source_accounts_migrated": false
+}

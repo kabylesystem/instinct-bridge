@@ -9,6 +9,8 @@ from __future__ import annotations
 import shutil
 import time
 import hashlib
+import os
+from pathlib import Path
 from contextlib import contextmanager
 
 from .source import Login, MigrationError, parse_totp
@@ -46,6 +48,13 @@ def brave_session():
     if not cookies:
         raise MigrationError("Sign in to Instinct in your regular Brave profile first.")
     executable = shutil.which("brave") or shutil.which("brave-browser")
+    candidates = [Path("/Applications/Brave Browser.app/Contents/MacOS/Brave Browser")]
+    for name in ("PROGRAMFILES", "PROGRAMFILES(X86)", "LOCALAPPDATA"):
+        if os.environ.get(name):
+            candidates.append(Path(os.environ[name]) / "BraveSoftware/Brave-Browser/Application/brave.exe")
+    executable = executable or next((str(path) for path in candidates if path.is_file()), None)
+    if not executable:
+        raise MigrationError("Install Brave and sign in to Instinct there before transferring.")
     with sync_playwright() as playwright:
         browser = playwright.chromium.launch(headless=True, executable_path=executable)
         try:

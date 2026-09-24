@@ -53,14 +53,8 @@ Keep raw credentials out of reports and logs. An optional resumable state must b
 4. **Robust transfer:** partial failure, rate limits, session expiry, cancellation, uncertain writes, and resumption.
 5. **Release:** installation tested on each claimed OS, dependency/license review, synthetic demo, compatibility matrix, security contact, versioned release and changelog. Only claim the platforms and formats actually tested.
 
-## Current implementation
+## Current implementation — Preview 0.3
 
-The user authenticated successfully. An isolated headless browser, explicitly authorized while the user keeps using the desktop, reuses only Instinct's cookie in memory. The source reader and observed GraphQL connector now pass a real synthetic round-trip: create, reload, verify username/password/TOTP configuration, skip identical re-import, refuse a conflicting password, clean up. See `docs/evidence/2026-09-24-e2e.json`.
+Local UI, encrypted Bitwarden PBKDF2/Argon2id input, Authy token decryption, explicit pairing, standalone OTP records, metadata-only preview and destination-session guards are implemented. A single transfer button connects and verifies selected credentials. A Linux standalone executable includes guided, temporary Authy capture; iOS approvals remain manual.
 
-The CLI is a narrow prototype. It accepts plaintext Bitwarden JSON; unsupported meaningful fields block transfer. Only default TOTP parameters are enabled. There is no graphical interface or encrypted-export reader. No real Bitwarden credentials or Authy seeds have been migrated.
-
-Kusaila clarified that his passwords are in Bitwarden and his 2FA is in Authy. Device platform (iPhone/Android) was asked asynchronously and is pending. Actual Authy extraction and explicit account matching are the next end-to-end work; a synthetic Bitwarden TOTP does not prove this path.
-
-## Preview 0.2 implementation
-
-Local UI, encrypted Bitwarden PBKDF2/Argon2id input, Authy token decryption, explicit pairing, metadata-only preview, session guards and 28 automated tests are implemented. See README for the precise supported subset and docs/evidence for live proof. Initial Authy extraction on iPhone and full-vault migration remain unverified/out of scope of this preview.
+40 tests cover parsing, crypto, web authorization, capture boundaries and cleanup. Real Instinct synthetic transfer/read-back/repeat/conflict/cleanup pass, including a live test of the packaged executable. See docs/evidence. No real source accounts have been migrated. USB pairing is validated, but Authy storage is inaccessible and actual phone extraction remains pending. Full-vault migration, other authenticators and cross-platform runtime support are not delivered.
