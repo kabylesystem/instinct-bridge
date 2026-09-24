@@ -35,3 +35,6 @@ Kusaila asked whether Instinct can distinguish different usernames at the same s
 
 ## Password visibility — 2026-09-25
 The review must distinguish a credential with a saved password from a passwordless login. Show presence and totals without sending password values to the browser preview. Keep plaintext password verification in the background transfer path; the results column describes transfer state, not source content.
+
+## Consumer path — 2026-09-25
+Kusaila wants a B2C interface with as little small explanatory text as possible. Keep the importer local with a browser UI: one file chooser, a password field revealed only for encrypted Bitwarden exports, a short review summary, and one transfer action. Authy, export help, unsupported-field details and the full account list live in disclosures. Every visible line should teach something new; remove repeated headings, status notices and footer copy. Keep the credential scope and unofficial Instinct connection visible before transfer. Preserve the dark, full-width tokens above, with no hosted processing or remote assets. A packaged GitHub release archive is the consumer download; the CLI/source launcher is for developers.

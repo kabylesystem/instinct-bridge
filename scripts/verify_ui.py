@@ -40,6 +40,7 @@ try:
         page.on('console', lambda message: errors.append('Browser console error') if message.type=='error' else None)
         page.goto(url,wait_until='networkidle')
         expect(page.locator('#preview')).to_be_disabled()
+        expect(page.locator('#bw-password-field')).to_be_hidden()
         assert not page.locator('#authy-option').evaluate('(element) => element.open')
         page.screenshot(path=str(artifacts/'desktop-load.png'),full_page=True)
         page.locator('#demo').click()
@@ -57,14 +58,18 @@ try:
         page.set_viewport_size({'width':1440,'height':1080})
         batch = {'encrypted':False,'items':[{'id':f'00000000-0000-4000-8000-{i:012d}',
             'type':1,'name':f'Synthetic account {i}','login':{'username':f'user-{i}@example.invalid',
-            'password':'SYNTHETIC-demo-only'}} for i in range(1,463)]}
+            'password':'SYNTHETIC-demo-only','uris':[{'uri':f'https://site-{i}.example.invalid/login'}]}} for i in range(1,463)]}
         page.locator('#bitwarden-file').set_input_files({'name':'synthetic-batch.json',
             'mimeType':'application/json','buffer':json.dumps(batch).encode()})
         expect(page.locator('#preview')).to_be_enabled()
+        expect(page.locator('#bw-password-field')).to_be_hidden()
         page.locator('#preview').click()
         expect(page.locator('#review')).to_be_visible()
         assert not page.locator('#accounts-details').evaluate('(element) => element.open')
+        assert not page.locator('#issues').evaluate('(element) => element.open')
+        expect(page.locator('#issue-summary')).to_have_text('462 logins with extra fields')
         expect(page.locator('#transfer')).to_be_visible()
+        assert page.locator('#transfer').bounding_box()['y'] < page.locator('#issues').bounding_box()['y']
         page.screenshot(path=str(artifacts/'desktop-batch-review.png'),full_page=True)
         page.locator('#accounts-details > summary').click()
         page.locator('#account-search').fill('Synthetic account 417')
@@ -72,7 +77,7 @@ try:
         visible_account = page.locator('#account-rows tr:visible .account-select')
         visible_account.uncheck()
         expect(page.locator('#selection-count')).to_have_text('461 accounts selected')
-        expect(page.locator('#transfer-label')).to_have_text('Transfer 461 accounts')
+        expect(page.locator('#transfer-label')).to_have_text('Transfer 461 logins')
         visible_account.check()
         expect(page.locator('#selection-count')).to_have_text('462 accounts selected')
         page.set_viewport_size({'width':390,'height':844})
@@ -82,6 +87,7 @@ try:
         page.set_viewport_size({'width':1440,'height':1080})
         report['large_review_collapsed_and_searchable']=True
         page.locator('#bitwarden-file').set_input_files(fixtures/'bitwarden-pbkdf2-synthetic.json')
+        expect(page.locator('#bw-password-field')).to_be_visible()
         page.locator('#authy-option > summary').click()
         page.locator('#authy-option .optional-content details > summary').click()
         page.locator('#authy-file').set_input_files(fixtures/'authy-encrypted-synthetic.json')
@@ -90,6 +96,7 @@ try:
         page.locator('#preview').click()
         expect(page.locator('#review')).to_be_visible()
         expect(page.locator('.authy-select')).to_have_value('0')
+        assert not page.locator('#issues').evaluate('(element) => element.open'), 'Extra-field details should stay folded'
         expect(page.locator('#bitwarden-password')).to_have_value('')
         expect(page.locator('#authy-password')).to_have_value('')
         report['encrypted_upload_and_pairing']=True
@@ -105,6 +112,7 @@ try:
             expect(page.locator('#transfer')).to_be_disabled()
             page.locator('#clear').click()
             page.locator('#bitwarden-file').set_input_files(fixtures/'bitwarden-pbkdf2-synthetic.json')
+            expect(page.locator('#bw-password-field')).to_be_visible()
             if not page.locator('#authy-option').evaluate('(element) => element.open'):
                 page.locator('#authy-option > summary').click()
             if not page.locator('#authy-option .optional-content details').evaluate('(element) => element.open'):

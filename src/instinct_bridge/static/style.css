@@ -31,3 +31,22 @@ td.site{color:var(--accent);font-size:14px;word-break:break-word}
 .account-filter input{width:min(100%,480px);min-height:44px;border:1px solid #3b4c63;background:#0e151e;color:var(--text);padding:10px 13px;border-radius:7px}
 #account-empty{padding:18px 24px;margin:0;color:var(--muted)}
 @media(max-width:800px){.account-filter{display:block;padding:16px 18px}.account-filter label{display:block;margin-bottom:8px}.account-filter input{width:100%}}
+.intro{margin-bottom:26px}.intro h1{margin:0}.stages{margin-bottom:32px}
+.main-source{padding:32px}.main-source h2{margin-bottom:22px}.main-source .file-label{max-width:780px}
+#bw-password-field{max-width:520px}.help-link{margin-top:18px}.help-link summary{font-size:16px}
+.optional-source{border:1px solid var(--border);background:var(--surface);border-radius:10px;padding:0 24px;margin-top:12px}
+.optional-source>summary{display:flex;align-items:center;gap:12px;list-style:none;margin:0;min-height:72px;color:var(--text);font-size:17px;font-weight:600}
+.optional-source>summary::-webkit-details-marker{display:none}.optional-source>summary::after{content:'+';margin-left:auto;color:var(--accent);font-size:25px;font-weight:400}
+.optional-source[open]>summary::after{content:'−'}.optional-source>summary span{color:var(--muted);font-size:15px;font-weight:400}
+.optional-content{padding:20px 0 24px;margin:0}.optional-content .capture-note{font-size:15px}
+.load-actions{margin:20px 0 0}.load-actions p{font-size:16px}
+#counts{font-size:16px}#demo-label{font-size:16px}
+.transfer-panel{margin-top:20px}.transfer-panel #connection-state{color:var(--text);font-size:16px;font-weight:550;margin:0}
+.transfer-consent{font-size:15px;max-width:94ch;margin:12px 0 20px}.transfer-actions{justify-content:flex-end}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.issues-details{border:1px solid var(--border);border-radius:8px;background:var(--surface);padding:0 24px;margin-top:16px}
+.issues-details>summary{list-style:none;min-height:62px;display:flex;align-items:center;color:var(--muted);font-size:16px}
+.issues-details>summary::-webkit-details-marker{display:none}.issues-details>summary::after{content:'+';margin-left:auto;color:var(--accent);font-size:22px}
+.issues-details[open]>summary::after{content:'−'}.issues-details p,.issues-details li{font-size:15px}.issues-details ul{padding-bottom:18px}
+.account-name .password-state{font-size:14px}
+@media(max-width:800px){.main-source{padding:22px}.optional-source{padding:0 20px}.optional-source>summary{min-height:68px}.load-actions{gap:18px}.load-actions p{margin:0}.transfer-actions button{width:100%}}

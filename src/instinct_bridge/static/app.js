@@ -6,6 +6,7 @@ let preview = null, connected = false, busy = false, captureReady = false, captu
 
 function noun(n, singular, plural=singular+'s'){return `${n} ${n===1?singular:plural}`;}
 function notice(text, kind='') { $('notice').textContent=text; $('notice').className=kind; $('notice').hidden=false; }
+function hideNotice(){ $('notice').hidden=true; $('notice').textContent=''; }
 async function api(path, data={}) {
   if (!token) throw Error('Open the private launch link printed by instinct-bridge-ui in your terminal.');
   const response = await fetch('/api/'+path, {method:'POST',headers:{'Content-Type':'application/json','X-Bridge-Token':token},body:JSON.stringify(data)});
@@ -30,7 +31,7 @@ function update(){
   $('select-all').checked=Boolean(preview?.accounts.length)&&count===preview.accounts.length;
   $('select-all').indeterminate=count>0&&count<(preview?.accounts.length||0);
   $('accounts-summary').textContent=preview?`${noun(preview.accounts.length,'login')} · ${count} selected`:'';
-  $('transfer-label').textContent=transferCompleted?'Transfer complete':count?`Transfer ${noun(count,'account')}`:'Select accounts to transfer';
+  $('transfer-label').textContent=transferCompleted?'Transfer complete':count?`Transfer ${noun(count,'login')}`:'Select logins to transfer';
   $('transfer').disabled=busy||!count||Boolean(preview?.demo)||transferCompleted;
   $('preview').disabled=busy||!($('bitwarden-file').files.length||$('authy-file').files.length||captureReady);
 }
@@ -43,9 +44,13 @@ function showProgress(data){
 }
 function stopProgressPolling(){progressGeneration++;if(progressTimer)clearInterval(progressTimer);progressTimer=null;}
 function render(data){
-  preview=data;connected=false;transferCompleted=false;$('review').hidden=false;$('sources').hidden=true;$('demo-label').hidden=!data.demo;$('account-rows').replaceChildren();$('authy-rows').replaceChildren();$('issue-list').replaceChildren();
+  preview=data;connected=false;transferCompleted=false;$('review').hidden=false;$('sources').hidden=true;$('demo-label').hidden=!data.demo;$('account-rows').replaceChildren();$('authy-rows').replaceChildren();$('issue-list').replaceChildren();hideNotice();
   $('accounts-details').open=data.accounts.length<=8;$('account-search').value='';$('account-empty').hidden=true;$('transfer-progress').hidden=true;stopProgressPolling();
-  $('counts').textContent=`${noun(data.accounts.length,'login')} ready · ${data.report.with_password===undefined?'':noun(data.report.with_password,'password')+' · '}${noun(data.report.with_site,'site')} identified · ${noun(data.report.withheld,'item')} withheld · ${noun(data.authy.length,'Authy key')}`;
+  $('review-title').textContent=`${noun(data.accounts.length,'login')} ready`;
+  const stats=[noun(data.report.with_password,'password'),noun(data.report.with_site,'site')];
+  if(data.report.withheld)stats.push(`${data.report.withheld} skipped`);
+  if(data.authy.length)stats.push(noun(data.authy.length,'Authy key'));
+  $('counts').textContent=stats.join(' · ');
   for(const a of data.accounts){
     const row=elem('tr');row.dataset.search=`${a.name} ${a.site} ${a.username}`.toLocaleLowerCase();const check=elem('input');check.type='checkbox';check.className='account-select';check.value=a.index;check.checked=true;check.setAttribute('aria-label',`Select ${a.name}`);check.addEventListener('change',()=>{transferCompleted=false;update();});
     const cell=elem('td');cell.append(check);const account=elem('td',a.name,'account-name');account.title=`Instinct name: ${a.destination_name}`;
@@ -54,7 +59,11 @@ function render(data){
     row.lastElementChild.id='pair-'+a.index;
     const status=elem('td','Not transferred','status');status.id='result-'+a.index;row.append(status);$('account-rows').append(row);
   }
-  $('issues').hidden=!data.report.issues.length;
+  $('issues').hidden=!data.report.issues.length;$('issues').open=false;
+  const issueParts=[];
+  if(data.report.partial)issueParts.push(`${data.report.partial} logins with extra fields`);
+  if(data.report.withheld)issueParts.push(`${data.report.withheld} items skipped`);
+  $('issue-summary').textContent=issueParts.join(' · ');
   if(data.report.partial)$('issue-list').append(elem('li',`${noun(data.report.partial,'login')} contain extra Bitwarden fields. Their credentials can move; extra fields remain in Bitwarden.`));
   const withheld=data.report.issues.filter(issue=>!issue.partial);
   for(const issue of withheld.slice(0,20))$('issue-list').append(elem('li',`Source item ${issue.index+1}: ${issue.reason}`));
@@ -67,20 +76,20 @@ function render(data){
     if(a.suggestions.length===1)select.value=String(a.suggestions[0]);
     row.append(name,elem('span','→','arrow'),select);$('authy-rows').append(row);
   }
-  $('allow-unmapped').checked=false;$('select-all').checked=true;$('connection-state').textContent=data.demo?'Sample data only. No connection or transfer is made.':'Sign in to Instinct in Brave first. The bridge connects automatically when you transfer.';
+  $('allow-unmapped').checked=false;$('select-all').checked=true;$('connection-state').textContent=data.demo?'Demo only · no transfer':'Uses your Instinct sign-in in Brave.';
   $('stage1').classList.remove('active');$('stage2').classList.add('active');$('stage3').classList.remove('active');update();
 }
 async function fileText(id, required){const file=$(id).files[0];if(!file){if(required)throw Error('Choose a Bitwarden export.');return '';}if(file.size>25*1024*1024)throw Error('Exports must be no larger than 25 MiB.');return file.text();}
 $('load-form').addEventListener('submit',event=>{event.preventDefault();action(async()=>{
-  notice('Unlocking your exports locally…');
+  notice('Reading your export…');
   const data=await api('preview',{bitwarden:await fileText('bitwarden-file',false),authy:await fileText('authy-file',false),bitwarden_password:$('bitwarden-password').value,authy_password:$('authy-password').value,use_capture:captureReady});
-  render(data);captureReady=false;stopCapturePolling();$('iphone-panel').hidden=true;$('load-form').reset();notice('Export ready. Check the summary, then transfer when you are ready.','success');
+  render(data);captureReady=false;stopCapturePolling();$('iphone-panel').hidden=true;$('load-form').reset();$('bw-password-field').hidden=true;
 });});
-$('demo').addEventListener('click',()=>action(async()=>{render(await api('demo'));$('load-form').reset();notice('Sample data loaded. This preview cannot send anything to Instinct.');}));
-$('clear').addEventListener('click',()=>action(async()=>{await api('clear');preview=null;connected=false;captureReady=false;transferCompleted=false;stopCapturePolling();stopProgressPolling();$('iphone-panel').hidden=true;$('review').hidden=true;$('sources').hidden=false;$('load-form').reset();$('account-rows').replaceChildren();$('authy-rows').replaceChildren();$('stage1').classList.add('active');$('stage2').classList.remove('active');$('stage3').classList.remove('active');notice('Ready for another export. Your source file is unchanged.');}));
+$('demo').addEventListener('click',()=>action(async()=>{render(await api('demo'));$('load-form').reset();$('bw-password-field').hidden=true;}));
+$('clear').addEventListener('click',()=>action(async()=>{await api('clear');preview=null;connected=false;captureReady=false;transferCompleted=false;stopCapturePolling();stopProgressPolling();$('iphone-panel').hidden=true;$('review').hidden=true;$('sources').hidden=false;$('load-form').reset();$('bw-password-field').hidden=true;$('account-rows').replaceChildren();$('authy-rows').replaceChildren();$('stage1').classList.add('active');$('stage2').classList.remove('active');$('stage3').classList.remove('active');hideNotice();}));
 $('transfer').addEventListener('click',()=>action(async()=>{
-  if(!connected){notice('Connecting to your Instinct session…');const connection=await api('connect');connected=connection.connected;$('connection-state').textContent='Connected to your Instinct vault.';}
-  const selection=selected();notice(`Transferring and verifying ${selection.length} selected accounts…`);$('stage2').classList.remove('active');$('stage3').classList.add('active');
+  if(!connected){$('connection-state').textContent='Connecting to Instinct…';const connection=await api('connect');connected=connection.connected;$('connection-state').textContent='Connected to Instinct.';}
+  const selection=selected();hideNotice();$('stage2').classList.remove('active');$('stage3').classList.add('active');
   showProgress({phase:'connecting',done:0,total:selection.length,created:0,already_present:0,conflict:0});
   const generation=++progressGeneration;
   progressTimer=setInterval(async()=>{try{const progress=await api('progress');if(generation===progressGeneration)showProgress(progress);}catch(_error){/* Transfer response handles errors. */}},1500);
@@ -100,7 +109,15 @@ $('transfer').addEventListener('click',()=>action(async()=>{
 $('select-all').addEventListener('change',()=>{for(const e of document.querySelectorAll('.account-select'))e.checked=$('select-all').checked;transferCompleted=false;update();});
 $('account-search').addEventListener('input',filterAccounts);
 
-for(const [input,label,fallback] of [['bitwarden-file','bw-name','Password-protected exports supported'],['authy-file','authy-name','Encrypted token JSON or decrypted export']])$(input).addEventListener('change',()=>{$(label).textContent=$(input).files[0]?.name||fallback;update();});
+$('bitwarden-file').addEventListener('change',async()=>{
+  const file=$('bitwarden-file').files[0];$('bw-password-field').hidden=true;$('bitwarden-password').value='';update();
+  if(!file||file.size>25*1024*1024)return;
+  try{
+    const encrypted=JSON.parse(await file.text()).encrypted===true;
+    if($('bitwarden-file').files[0]===file)$('bw-password-field').hidden=!encrypted;
+  }catch(_error){/* Preview reports malformed exports. */}
+});
+$('authy-file').addEventListener('change',update);
 if(!token)notice('Start instinct-bridge-ui, then open the private link printed in your terminal.','error');
 update();
 

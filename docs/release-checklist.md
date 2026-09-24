@@ -11,6 +11,8 @@
 - [x] One transfer button connects, writes, verifies and skips identical repeats.
 - [x] One-command source launcher; optional Authy controls; searchable, collapsed large-account review; visible transfer progress.
 - [x] Two same-title, same-site synthetic accounts retain distinct usernames/passwords, appear with readable labels, skip on repeat and clean up.
+- [x] Consumer UI keeps the main flow to file → review → transfer; encrypted password and optional details appear only when needed.
+- [x] Linux tar.gz archive packaging and executable-bit check configured in CI.
 - [ ] Validate initial extraction against a real Authy iPhone.
 - [ ] Compare migrated keys with codes in the actual Authy app and test real service logins.
 - [ ] Independently review security and confirm supported platforms.
