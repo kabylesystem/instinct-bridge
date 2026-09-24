@@ -1,0 +1,34 @@
+{
+  "checked_at": "2026-09-24T19:13:50.642393+00:00",
+  "data": "synthetic",
+  "source": "Bitwarden JSON fixture",
+  "destination": "real authenticated Instinct vault",
+  "first_transfer": {
+    "status": "created",
+    "verified": true,
+    "checks": {
+      "no_extra_fields": true,
+      "username": true,
+      "password": true,
+      "totp_configuration": true,
+      "totp_codes": true
+    }
+  },
+  "after_reload": {
+    "no_extra_fields": true,
+    "username": true,
+    "password": true,
+    "totp_configuration": true,
+    "totp_codes": true
+  },
+  "second_transfer": {
+    "status": "already_present",
+    "verified": true
+  },
+  "conflict": {
+    "status": "conflict",
+    "verified": false
+  },
+  "original_unchanged": true,
+  "cleanup_verified": true
+}

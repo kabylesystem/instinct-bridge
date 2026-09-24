@@ -22,7 +22,11 @@ Twilio's [2FA account-token support index](https://help.twilio.com/sections/1975
 
 ## Instinct
 
-The [official homepage](https://instinct.com/) describes the assistant, but does not expose an import specification there. Opening `https://app.instinct.com/vault` in the user's regular Brave profile redirects to the SMS login page. Direct anonymous HTTP fetching returned 403. No authenticated destination schema has been inspected.
+The [official homepage](https://instinct.com/) does not expose an import specification. Anonymous fetching returned 403, but after the user signed in, the actual web client was inspected and exercised in an isolated authenticated headless browser.
+
+Observed endpoint: `https://api.instinct.com/-/api/graphql`. The web client's `useVaultQuery`, `useVaultUpsertMutation`, `useVaultRevealMutation`, and `useVaultDeleteMutation` supply the connector contract. Upsert receives a kind/name and key/value field list. Login fields include `username`, `password`, and `totp`. The server returns the TOTP secret as a normalized `otpauth://` URI, not as the original bare seed. All default cryptographic parameters were verified equal after read-back. These are observed private web operations, not a published supported API.
+
+The actual HTTP save returned 200 without GraphQL errors. A live automated fixture subsequently verified persistence, repeat import, conflict handling and cleanup. See [the report](evidence/2026-09-24-e2e.json). This does not establish Authy extraction or full-vault compatibility.
 
 [Rohan Adwankar's firsthand investigation](https://rohanadwankar.github.io/posts/platforms.html) reports an internal `tools vault` namespace with import-related capabilities and a GraphQL tool-execution bridge. This is a lead for investigation, not an authenticated public client contract. Do not reuse a sandbox's privileged identity or assume these operations are callable from a community app.
 
@@ -34,7 +38,6 @@ Four GitHub discovery passes were run: direct repository keywords (`instinct vau
 
 ## Evidence to collect next
 
-- Actual Instinct import UI, record types and TOTP support.
-- Whether a native Bitwarden import has already shipped.
-- A synthetic end-to-end transfer and read-back.
-- Current Authy export feasibility on the devices the first release will support.
+- Actual Authy export feasibility on the user's device, followed by account matching and transfer.
+- Other item types, encrypted inputs and non-default OTP configurations.
+- Any native bulk-import feature beyond the inspected vault editor; its absence has not been established.

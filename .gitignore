@@ -16,3 +16,4 @@ exports/
 *storage-state*
 __pycache__/
 .venv/
+*.egg-info/

@@ -1,6 +1,6 @@
 # Contributing
 
-The project is currently validating source formats and the Instinct destination contract. Please avoid implementing guessed endpoints.
+The project has a tested login/default-TOTP connector based on operations observed in Instinct's web client. Additional source types, Authy extraction, encrypted input and the graphical interface remain open. Please avoid implementing guessed endpoints.
 
 Contributions should document their format/version assumptions, reuse established libraries where possible, and include synthetic test fixtures. Never use a production vault as a fixture, even with some fields removed.
 

@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "instinct-bridge"
+version = "0.1.0"
+description = "Local Bitwarden login and TOTP migration to Instinct"
+requires-python = ">=3.11"
+dependencies = ["playwright==1.63.0", "browser-cookie3==0.20.1"]
+
+[project.scripts]
+instinct-bridge = "instinct_bridge.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

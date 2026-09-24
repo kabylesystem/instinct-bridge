@@ -53,6 +53,10 @@ Keep raw credentials out of reports and logs. An optional resumable state must b
 4. **Robust transfer:** partial failure, rate limits, session expiry, cancellation, uncertain writes, and resumption.
 5. **Release:** installation tested on each claimed OS, dependency/license review, synthetic demo, compatibility matrix, security contact, versioned release and changelog. Only claim the platforms and formats actually tested.
 
-## Current blocker
+## Current implementation
 
-The user's normal Brave profile reaches Instinct's SMS sign-in page at `/login?returnTo=%2Fvault`. An authenticated session is needed to inspect the destination. The user has been asked to sign in directly. No vault contents have been read or transferred.
+The user authenticated successfully. An isolated headless browser, explicitly authorized while the user keeps using the desktop, reuses only Instinct's cookie in memory. The source reader and observed GraphQL connector now pass a real synthetic round-trip: create, reload, verify username/password/TOTP configuration, skip identical re-import, refuse a conflicting password, clean up. See `docs/evidence/2026-09-24-e2e.json`.
+
+The CLI is a narrow prototype. It accepts plaintext Bitwarden JSON; unsupported meaningful fields block transfer. Only default TOTP parameters are enabled. There is no graphical interface or encrypted-export reader. No real Bitwarden credentials or Authy seeds have been migrated.
+
+Kusaila clarified that his passwords are in Bitwarden and his 2FA is in Authy. Device platform (iPhone/Android) was asked asynchronously and is pending. Actual Authy extraction and explicit account matching are the next end-to-end work; a synthetic Bitwarden TOTP does not prove this path.

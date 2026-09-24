@@ -1,0 +1,16 @@
+{
+  "encrypted": false,
+  "folders": [],
+  "items": [
+    {
+      "id": "00000000-0000-4000-8000-000000000001",
+      "type": 1,
+      "name": "Instinct Bridge E2E TEST",
+      "login": {
+        "username": "bridge-e2e@example.invalid",
+        "password": "SYNTHETIC-only-Bridge-2026!",
+        "totp": "otpauth://totp/InstinctBridge:bridge-e2e%40example.invalid?secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ&issuer=InstinctBridge&algorithm=SHA1&digits=6&period=30"
+      }
+    }
+  ]
+}
