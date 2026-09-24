@@ -39,5 +39,11 @@ Four GitHub discovery passes were run: direct repository keywords (`instinct vau
 ## Evidence to collect next
 
 - Actual Authy export feasibility on the user's device, followed by account matching and transfer.
-- Other item types, encrypted inputs and non-default OTP configurations.
+- Other item types and non-default OTP configurations. Portable encrypted inputs now have independent synthetic tests.
 - Any native bulk-import feature beyond the inspected vault editor; its absence has not been established.
+
+## Encrypted formats implemented in preview 0.2
+
+Bitwarden encoding was checked against [the SDK encrypted exporter](https://github.com/bitwarden/sdk-internal/blob/main/crates/bitwarden-exporters/src/encrypted_json.rs) and its crypto KDF/key helpers. The portable format derives from the base64 salt text, uses SHA256(salt text) for Argon2id, expands separate enc/mac keys, and authenticates type-2 AES-CBC ciphertext before decrypting. Independent fixtures are encoded with [Node/OpenSSL crypto](https://nodejs.org/api/crypto.html), not with the production Python decoder. They validate format compatibility against that independent encoder, not an actual new Bitwarden export.
+
+Authy token fields and PBKDF2-SHA1/AES-CBC decryption were inspected in [authy-export at commit 074d460](https://github.com/valentin-dirken/authy-export/tree/074d46069f827264b58c0ee0737bdb9fe0d07da5). Its iPhone traffic-capture workflow remains untested here; the reader accepts an already captured/exported JSON. No third-party capture script is bundled or automatically run.

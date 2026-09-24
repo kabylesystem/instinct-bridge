@@ -1,6 +1,7 @@
 """The default command previews locally; explicit flags enable network writes."""
 
 import argparse
+import getpass
 import json
 from pathlib import Path
 
@@ -10,12 +11,15 @@ from .source import MigrationError, load_plan
 def main():
     parser = argparse.ArgumentParser(description="Local Bitwarden login/TOTP migration prototype")
     parser.add_argument("export", type=Path)
+    parser.add_argument("--encrypted", action="store_true", help="Prompt privately for the portable export password")
     parser.add_argument("--apply", action="store_true", help="Transfer ready records to Instinct")
     parser.add_argument("--brave-session", action="store_true", help="Read only the local Instinct session from Brave")
     parser.add_argument("--accept-unofficial-connector", action="store_true", help="Acknowledge the observed private web API")
     args = parser.parse_args()
     try:
-        plan = load_plan(args.export)
+        password = getpass.getpass("Bitwarden export password: ") if args.encrypted else ""
+        plan = load_plan(args.export, password)
+        password = ""
         report = plan.report()
         if args.apply:
             if not args.brave_session or not args.accept_unofficial_connector:

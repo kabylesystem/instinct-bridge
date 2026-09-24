@@ -4,7 +4,7 @@
 
 A community tool that lets an ordinary user migrate supported credentials into Instinct without manually re-entering each account. Intended distribution: open-source GitHub repository, clear installation instructions, reproducible releases, and an X launch with a synthetic-data demonstration.
 
-Working name: Instinct Bridge. Application format: local guided application proposed; user preference pending. No LLM is needed to process credentials or match accounts.
+Working name: Instinct Bridge. Application format: implemented local guided application, chosen within the authorized autonomous build. No LLM is needed to process credentials or match accounts.
 
 ## Resolve the destination first
 
@@ -60,3 +60,7 @@ The user authenticated successfully. An isolated headless browser, explicitly au
 The CLI is a narrow prototype. It accepts plaintext Bitwarden JSON; unsupported meaningful fields block transfer. Only default TOTP parameters are enabled. There is no graphical interface or encrypted-export reader. No real Bitwarden credentials or Authy seeds have been migrated.
 
 Kusaila clarified that his passwords are in Bitwarden and his 2FA is in Authy. Device platform (iPhone/Android) was asked asynchronously and is pending. Actual Authy extraction and explicit account matching are the next end-to-end work; a synthetic Bitwarden TOTP does not prove this path.
+
+## Preview 0.2 implementation
+
+Local UI, encrypted Bitwarden PBKDF2/Argon2id input, Authy token decryption, explicit pairing, metadata-only preview, session guards and 28 automated tests are implemented. See README for the precise supported subset and docs/evidence for live proof. Initial Authy extraction on iPhone and full-vault migration remain unverified/out of scope of this preview.

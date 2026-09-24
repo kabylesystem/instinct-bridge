@@ -1,0 +1,20 @@
+{
+  "checked_at": "2026-09-24T20:26:35.936912+00:00",
+  "data": "synthetic",
+  "iphone_capture_tested": false,
+  "demo_pairing": true,
+  "demo_transfer_disabled": true,
+  "mobile_no_overflow": true,
+  "encrypted_upload_and_pairing": true,
+  "live_transfer_verified": true,
+  "repeat_skipped_and_verified": true,
+  "browser_errors": [],
+  "independent_readback": {
+    "no_extra_fields": true,
+    "username": true,
+    "password": true,
+    "totp_configuration": true,
+    "totp_codes": true
+  },
+  "cleanup_verified": true
+}

@@ -1,0 +1,8 @@
+{
+  "checked_at": "2026-09-24",
+  "tool": "pip-audit",
+  "scope": "installed preview 0.2.0 environment, including pip 26.2.1",
+  "packages_checked": 22,
+  "known_vulnerabilities": 0,
+  "independent_security_audit": false
+}

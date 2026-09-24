@@ -1,74 +1,79 @@
 # Instinct Bridge
 
-Move passwords and authenticator accounts from existing vaults into Instinct, with a clear account of what transferred and what did not.
+A local app to move Bitwarden logins and recoverable Authy 2FA keys into Instinct, with account selection, explicit pairing, and verification after transfer.
 
-**Status: working login/TOTP prototype, tested against a real Instinct account with synthetic data on 2026-09-24.** This is not a complete-vault migrator yet. Authy extraction is not implemented or validated. Independent of Instinct, Bitwarden, and Twilio.
+**Preview 0.2.** Tested against a real Instinct vault using synthetic credentials. This is a login/TOTP bridge, not a complete-vault migration tool. **Extraction from an actual Authy iPhone remains unvalidated.** Independent of Instinct, Bitwarden, and Twilio.
 
-The live test confirmed creation, password read-back, complete TOTP configuration, persistence after reload, duplicate prevention, conflict refusal, and cleanup. [Machine-readable evidence](docs/evidence/2026-09-24-e2e.json).
+![Local account review using synthetic data](docs/evidence/desktop-review.png)
 
-## Run the prototype
+## Run locally
 
-Tested on CachyOS/Linux with Python 3.14 and Brave. Other operating systems are not yet verified.
+Verified on CachyOS/Linux with Python 3.14 and Brave. Other platforms are not yet verified.
 
 ```bash
 python3 -m venv .venv
 .venv/bin/pip install -e .
-
-# Local preview; no network access or cookies read.
-.venv/bin/instinct-bridge tests/fixtures/bitwarden-synthetic.json
-
-# Explicit transfer using only your local Instinct session from Brave.
-# Sign in to app.instinct.com in Brave first.
-.venv/bin/instinct-bridge tests/fixtures/bitwarden-synthetic.json \
-  --apply --brave-session --accept-unofficial-connector
+.venv/bin/instinct-bridge-ui
 ```
 
-The connector runs a separate headless browser and leaves your desktop alone. It uses operations observed in Instinct's own web app, not a published stable API. Session cookies remain in memory; no browser state is exported.
+Open the private link printed in the terminal. The app binds to `127.0.0.1`; it does not open or focus a browser automatically. Keep the terminal open. Sign in to [Instinct](https://app.instinct.com/vault) in your regular Brave profile before connecting.
 
-The current source reader accepts **unencrypted Bitwarden JSON**. Encrypted input is not implemented. Keep real exports on your own device and out of Git, issues, and chat. The prototype creates no plaintext intermediate export, but does not delete or secure your original input file.
+1. Select a Bitwarden JSON export. Portable password-protected exports support PBKDF2 and Argon2id; account-restricted backups are rejected. Enter the **export password**, which stays local.
+2. Optionally load a captured Authy token JSON and enter its backup password. See the [iPhone guide](docs/authy-iphone.md) for the separate extraction step.
+3. Review the selected accounts and Authy pairings. Unsupported fields are reported and stay in Bitwarden.
+4. Connect to Instinct, confirm the scope, and transfer. The bridge reads each stored credential back to verify it.
+5. Use **Forget data**, then stop the server with Ctrl+C.
 
-Items containing notes, URLs, custom fields, passkeys, or other unsupported content are withheld. If any item needs attention, `--apply` stops before transferring anything. It does not silently discard those fields. Vault organization metadata (folders, favorites, IDs, timestamps, permissions) is not migrated. Authenticator labels/issuers are normalized by Instinct; cryptographic parameters are verified.
+“Explore with sample data” runs a preview that cannot connect to or write to a real vault.
 
-Only SHA1 / 6 digits / 30 seconds is accepted for live TOTP migration so far. Do not run parallel imports or edit the destination during an import: the observed upsert API has no verified conditional-create primitive. Existing names are checked before writing; conflicting records are withheld and uncertain writes are never retried automatically.
+## Supported scope
 
-## Verify
+| Input | Supported today | Limits |
+| --- | --- | --- |
+| Bitwarden JSON | Names, usernames, passwords, embedded TOTP | UI explicitly offers credential-only transfer when other fields exist; strict CLI withholds such items |
+| Password-protected Bitwarden JSON | PBKDF2-SHA256 and Argon2id decryption, authenticated AES-CBC | Bounded KDF workload; account-restricted export unsupported |
+| Authy token JSON | Local encrypted backup decryption; explicit login pairing | Captured/exported token file required; no automatic iPhone extraction |
+| TOTP | SHA1, 6 digits, 30 seconds | Other algorithms/configurations are withheld |
+| Other vault content | Reported for review | Notes, URLs, cards, attachments, passkeys and organization metadata are not migrated |
+
+Existing identical entries are verified and skipped. Different entries with the same name are left unchanged, including an existing login to which you are trying to add a new 2FA key. Import passwords and Authy together for automatic pairing. Duplicate source names require explicit resolution.
+
+## Privacy and transfer behavior
+
+Exports are unlocked in local process memory. No analytics, hosted import service, remote assets, or plaintext intermediate exports. Passwords and OTP seeds are excluded from preview responses and logs. Source files are never deleted. Loaded server data expires after 15 minutes of inactivity; managed memory is not securely erased.
+
+The connector reads the Instinct session from Brave and uses a **separate headless browser**. It relies on operations observed in Instinct's own web application, **not a stable public API**. Selected credentials go directly over HTTPS to Instinct, which receives their plaintext values. This does not extend Bitwarden's end-to-end encryption guarantees to Instinct.
+
+Run one importer at a time without concurrent destination edits: the observed upsert API has no verified conditional-create operation. A failed or uncertain write stops the batch; it is never automatically retried. See [security requirements and limitations](SECURITY.md).
+
+## CLI and verification
 
 ```bash
+# Local preview, without reading a browser session.
+.venv/bin/instinct-bridge tests/fixtures/bitwarden-synthetic.json
+
+# Encrypted preview; prompts privately, never takes a password argument.
+.venv/bin/instinct-bridge path/to/export.json --encrypted
+
+# Explicit strict transfer, only if all source items are supported.
+.venv/bin/instinct-bridge path/to/export.json --encrypted \
+  --apply --brave-session --accept-unofficial-connector
+
 .venv/bin/python -m unittest discover -s tests -v
 
-# Explicit live synthetic test; creates and removes its own unique record.
+# Optional: creates and cleans up its own synthetic record in your real vault.
 .venv/bin/python scripts/verify_e2e.py --brave-session
 ```
 
-This proves stored credentials and TOTP configuration, not a login to an external website or extraction from an actual Authy device. The OTP implementation is checked against [RFC 6238 test vectors](https://www.rfc-editor.org/rfc/rfc6238).
+The graphical interface provides Authy pairing and account selection. The CLI currently imports Bitwarden only.
 
-## Intended experience
+[Live connector evidence](docs/evidence/2026-09-24-e2e.json) and [browser + encrypted-source evidence](docs/evidence/2026-09-24-ui-e2e.json) record exact checks. Synthetic encrypted fixtures are generated independently with Node/OpenSSL (`scripts/generate_fixtures.mjs`); their public password is `SYNTHETIC-export-password`. TOTP is checked against RFC 6238 vectors. These checks do not prove a login to every external service or extraction from an iPhone.
 
-1. Open the tool locally and select your export.
-2. Unlock encrypted exports on your own device.
-3. Review accounts, authenticator matches, duplicates, and unsupported data.
-4. Transfer selected entries directly to your Instinct vault.
-5. Review verified results and any entries needing attention.
+## Community release
 
-The eventual interface is a guided local application with no hosted vault-processing service. The current interface is a CLI; there is no graphical application yet.
+MIT licensed. Please use synthetic accounts in contributions and bug reports. The current preview needs a real-device Authy extraction test and independent security review before claiming broad migration support.
 
-## Planned compatibility
-
-| Source | Intended scope | Current evidence |
-| --- | --- | --- |
-| Bitwarden Password Manager | Supported login fields and embedded default TOTP | Live synthetic round-trip passed |
-| Bitwarden Authenticator | Locally stored TOTP accounts in the same JSON schema | Parser test passed; standalone live import not yet tested |
-| Standard authenticator export | `otpauth://` embedded in supported JSON | Default TOTP round-trip passed |
-| Authy by Twilio | Recoverable TOTP accounts | No official consumer export; separate feasibility work required |
-| Google Authenticator, Aegis, 2FAS, Ente | Additional source adapters | Candidates, not implemented |
-
-“Complete” means accounting for every source item and field. It does not mean silently converting unsupported passkeys, attachments, or secure notes into passwords.
-
-## Project documents
-
-- [Product and implementation plan](docs/product-plan.md)
-- [Research and compatibility evidence](docs/research.md)
-- [Security requirements](SECURITY.md)
 - [Contributing](CONTRIBUTING.md)
-
-No real vault files, credentials, session captures, or TOTP seeds belong in this repository or its issues. Examples and demonstrations must use synthetic accounts.
+- [Research and source references](docs/research.md)
+- [Implementation plan](docs/product-plan.md)
+- [Release checklist](docs/release-checklist.md)

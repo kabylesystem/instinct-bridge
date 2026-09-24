@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import shutil
 import time
+import hashlib
 from contextlib import contextmanager
 
 from .source import Login, MigrationError, parse_totp
@@ -52,10 +53,18 @@ def brave_session():
             context.set_default_timeout(15_000)
             context.add_cookies(cookies)
             page = context.new_page()
-            page.goto("https://app.instinct.com/vault", wait_until="networkidle")
+            # The app keeps background requests open; network-idle is not readiness.
+            # The authenticated vault query below is the actual readiness check.
+            try:
+                page.goto("https://app.instinct.com/vault", wait_until="domcontentloaded", timeout=30000)
+            except Exception:
+                raise MigrationError("Instinct did not load. Check the connection and try again before transferring.") from None
             if page.url != "https://app.instinct.com/vault":
                 raise MigrationError("The Instinct session is not authenticated.")
-            yield Instinct(page)
+            destination = Instinct(page)
+            destination.session_fingerprint = hashlib.sha256(cookies[0]["value"].encode()).hexdigest()
+            destination.inventory()
+            yield destination
         finally:
             browser.close()
 
@@ -128,4 +137,4 @@ class Instinct:
                 "verified": all(checks.values()), "checks": checks}
 
     def reload(self):
-        self.page.reload(wait_until="networkidle")
+        self.page.reload(wait_until="domcontentloaded")

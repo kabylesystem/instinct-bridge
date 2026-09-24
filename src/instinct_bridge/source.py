@@ -78,6 +78,7 @@ class Login:
     username: str
     password: str
     totp: Totp | None = None
+    source_index: int = -1
 
     def fields(self) -> list[dict[str, str]]:
         result = [{"key": "username", "value": self.username},
@@ -108,19 +109,34 @@ def _unique_object(pairs):
     return result
 
 
-def load_plan(path: Path) -> Plan:
+def load_plan(path: Path, password="", allow_partial=False) -> Plan:
     try:
         with path.open("rb") as stream:
             raw = stream.read(MAX_BYTES + 1)
+    except OSError:
+        raise MigrationError("Cannot read the export file.") from None
+    return loads_plan(raw, password, allow_partial)
+
+
+def loads_plan(raw, password="", allow_partial=False) -> Plan:
+    try:
         if len(raw) > MAX_BYTES:
             raise MigrationError("Export exceeds the 25 MiB limit.")
         data = json.loads(raw, object_pairs_hook=_unique_object)
-    except (OSError, UnicodeError, ValueError, RecursionError):
+    except (UnicodeError, ValueError, RecursionError):
         raise MigrationError("Cannot read a valid JSON export.") from None
     if not isinstance(data, dict):
         raise MigrationError("Expected a Bitwarden JSON export.")
+    if data.get("encrypted") is True:
+        from .unlock import unlock_bitwarden
+        decrypted = unlock_bitwarden(data, password)
+        # Nested encryption envelopes are invalid, not a recursive KDF workload.
+        inner = json.loads(decrypted, object_pairs_hook=_unique_object)
+        if not isinstance(inner, dict) or inner.get("encrypted") is not False:
+            raise MigrationError("Invalid decrypted Bitwarden export.")
+        data = inner
     if data.get("encrypted") is not False:
-        raise MigrationError("This prototype requires an unencrypted Bitwarden JSON export; encrypted exports are not implemented.")
+        raise MigrationError("Expected a Bitwarden JSON export.")
     items = data.get("items")
     if not isinstance(items, list) or len(items) > MAX_ITEMS:
         raise MigrationError("Invalid or oversized item collection.")
@@ -128,7 +144,7 @@ def load_plan(path: Path) -> Plan:
     for index, item in enumerate(items):
         def issue(reason):
             issues.append({"index": index, "reason": reason})
-        if not isinstance(item, dict) or item.get("type") != 1:
+        if not isinstance(item, dict) or type(item.get("type")) is not int or item.get("type") != 1:
             issue("Unsupported item type; this prototype transfers login records only.")
             continue
         login = item.get("login")
@@ -156,8 +172,10 @@ def load_plan(path: Path) -> Plan:
                   if k not in {"username", "password", "totp", "passwordRevisionDate"}
                   and v not in (None, "", [], {})]
         if extra:
-            issue("Contains fields not supported by this prototype; item withheld.")
-            continue
+            if not allow_partial:
+                issue("Contains fields not supported by this prototype; item withheld.")
+                continue
+            issues.append({"index": index, "reason": "Extra source fields stay in Bitwarden.", "partial": True})
         if item.get("deletedDate"):
             issue("Deleted source item withheld.")
             continue
@@ -171,7 +189,7 @@ def load_plan(path: Path) -> Plan:
         if not username and not password and not totp:
             issue("Empty credential record withheld.")
             continue
-        logins.append(Login(name, username, password, totp))
+        logins.append(Login(name, username, password, totp, index))
     names = Counter(x.name.casefold() for x in logins)
     if any(count > 1 for count in names.values()):
         raise MigrationError("Duplicate source names require explicit resolution; no transfer attempted.")

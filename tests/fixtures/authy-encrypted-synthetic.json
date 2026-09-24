@@ -1,0 +1,14 @@
+{
+  "authenticator_tokens": [
+    {
+      "unique_id": "synthetic-authy-1",
+      "name": "bridge@example.invalid",
+      "issuer": "Instinct Bridge encrypted TEST",
+      "digits": 6,
+      "salt": "SYNTHETIC-authy-salt",
+      "key_derivation_iterations": 100000,
+      "unique_iv": "09090909090909090909090909090909",
+      "encrypted_seed": "BvsyNf62V8ip3JzxdxGg9wULIyoaNMcWNZCqNDkiQ0p6JrtuKc3hhrurvF31fxzC"
+    }
+  ]
+}
