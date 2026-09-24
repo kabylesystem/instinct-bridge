@@ -131,12 +131,17 @@ def _site_from_uris(uris) -> str:
     return ""
 
 
-def _migration_name(title: str, site: str, identifier: str) -> str:
-    # The target has no source-ID or URL field, so the name carries both a readable
-    # hostname and a stable marker. Keep the marker even if a long title is trimmed.
+def _migration_name(title: str, site: str, username: str, identifier: str) -> str:
+    # Instinct's list shows names, not usernames. Include a readable account hint
+    # alongside the hostname while retaining the stable marker for safe reimports.
     suffix = f" [bw:{identifier}]"
-    prefix = title + (f" · {site}" if site else "")
-    return prefix[:240 - len(suffix)].rstrip() + suffix
+    site_label = site if len(site) <= 85 else "…" + site[-84:]
+    readable_username = " ".join("".join(char if char.isprintable() else " " for char in username).split())
+    username_label = readable_username if len(readable_username) <= 70 else readable_username[:69] + "…"
+    site_part = f" · {site_label}" if site_label else ""
+    username_part = f" · login: {username_label}" if username_label else ""
+    title_budget = 240 - len(suffix) - len(site_part) - len(username_part)
+    return title[:title_budget].rstrip() + site_part + username_part + suffix
 
 
 def _unique_object(pairs):
@@ -240,7 +245,7 @@ def loads_plan(raw, password="", allow_partial=False, migration_names=False) -> 
                 issue("Missing or invalid Bitwarden item ID; this login cannot be safely reimported.")
                 continue
         site = _site_from_uris(login.get("uris")) if migration_names else ""
-        destination_name = _migration_name(name, site, identifier) if migration_names else name
+        destination_name = _migration_name(name, site, username, identifier) if migration_names else name
         if extra:
             issues.append({"index": index, "reason": "Extra source fields stay in Bitwarden.", "partial": True})
         logins.append(Login(destination_name, username, password, totp, index,

@@ -2,7 +2,7 @@
 
 A local app to move Bitwarden logins and recoverable Authy 2FA keys into Instinct, with account selection, explicit pairing, and verification after transfer.
 
-**Preview 0.5.0.** Tested against a real Instinct vault using synthetic credentials and a full login migration. The UI accepts Bitwarden logins with duplicate titles and supports repeat imports from later exports. It is a login/TOTP bridge, not a complete-vault migration tool. **Extraction from an actual Authy iPhone remains unvalidated.** Independent of Instinct, Bitwarden, and Twilio.
+**Preview 0.5.1.** Tested against a real Instinct vault using synthetic credentials and a full login migration. The UI accepts Bitwarden logins with duplicate titles and supports repeat imports from later exports. It is a login/TOTP bridge, not a complete-vault migration tool. **Extraction from an actual Authy iPhone remains unvalidated.** Independent of Instinct, Bitwarden, and Twilio.
 
 ![Local account review using 462 synthetic accounts](docs/evidence/desktop-batch-review.png)
 
@@ -40,7 +40,9 @@ Authy is optional. Open **Also moving Authy codes?** before reviewing if you wan
 | TOTP | SHA1, 6 digits, 30 seconds | Other algorithms/configurations are withheld |
 | Other vault content | Reported for review | Full URLs, notes, cards, attachments, passkeys and organization metadata are not migrated |
 
-The UI appends the site's **hostname** and a stable Bitwarden item ID to the Instinct entry name. Instinct's observed login schema has no URL field, so full URLs and browser autofill associations cannot be preserved. The original URL remains in Bitwarden. A later export can import newly added logins; previously imported IDs are verified and skipped even if their Bitwarden title changed. A changed password or 2FA key on an imported ID causes a conflict and is **not** silently overwritten. Conflicts leave that entry untouched while other selected accounts continue. A timeout or unverified write stops the batch. An identical entry imported by an earlier untagged bridge version is recognized by its exact title and credentials. Import passwords and Authy together for pairing. Live continuous sync is not provided: create a fresh Bitwarden export for later changes.
+Each Instinct login stores its exact username in Instinct's `username` field. New entries also put the site's **hostname** and a readable username hint in the visible entry name when available, plus a stable Bitwarden item ID. This distinguishes two accounts with the same title and site in Instinct's list. The hint is shortened for unusually long usernames; the exact value stays in the username field. Instinct's observed login schema has no URL field, so full URLs and browser autofill associations cannot be preserved. The original URL remains in Bitwarden. A later export can import newly added logins; previously imported IDs are verified and skipped even if their Bitwarden title changed. A changed password, username or 2FA key on an imported ID causes a conflict and is **not** silently overwritten. Conflicts leave that entry untouched while other selected accounts continue. A timeout or unverified write stops the batch. An identical entry imported by an earlier untagged bridge version is recognized by its exact title and credentials. Import passwords and Authy together for pairing. Live continuous sync is not provided: create a fresh Bitwarden export for later changes.
+
+Entries imported before 0.5.1 retain their existing names when reimported; the bridge does not delete and recreate credentials merely to change a label. Their exact usernames remain stored and independently verifiable in Instinct. The visible username hint helps people and agents select an account, but it does not prove how Instinct's assistant chooses credentials for a task.
 
 Password-only and username-only Bitwarden logins are supported. Instinct refuses reveal requests for empty fields, so verification checks the destination's field-presence flag before attempting a read-back. The review shows whether a password is present, never its value.
 
@@ -69,6 +71,9 @@ Run one importer at a time without concurrent destination edits: the observed up
 
 # Optional: creates and cleans up its own synthetic record in your real vault.
 .venv/bin/python scripts/verify_e2e.py --brave-session
+
+# Optional: checks two synthetic usernames at the same service, then removes both.
+.venv/bin/python scripts/verify_multi_account.py --brave-session
 ```
 
 The graphical interface provides Authy pairing and account selection. The CLI currently imports Bitwarden only.

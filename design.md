@@ -30,5 +30,8 @@ The project lives under a directory containing a space. Give shell instructions 
 ## Large-vault usability — 2026-09-25
 The primary action must stay visible above the account table. Fold the list by default for large exports, show the selected total near the action, and let users search and deselect individual entries on demand. Keep Authy setup behind an optional disclosure. Show count-only progress throughout a transfer so long batches are understandable without exposing credentials.
 
+## Multi-account identity — 2026-09-25
+Kusaila asked whether Instinct can distinguish different usernames at the same service. Its list displays entry names but not the stored username. New migration names therefore include a readable username hint alongside the hostname and stable source ID; exact usernames stay in the native field. Preserve already imported entries on repeat instead of rewriting or deleting them merely to update a label. Do not claim this proves the assistant's own account-selection behavior.
+
 ## Password visibility — 2026-09-25
 The review must distinguish a credential with a saved password from a passwordless login. Show presence and totals without sending password values to the browser preview. Keep plaintext password verification in the background transfer path; the results column describes transfer state, not source content.

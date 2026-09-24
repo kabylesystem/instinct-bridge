@@ -283,7 +283,7 @@ def create_app(token, expected_host, destination_factory=brave_session, capture_
 def main():
     parser = argparse.ArgumentParser(description="Start Instinct Bridge on this computer only")
     parser.add_argument("--port", type=int, default=8765)
-    parser.add_argument("--version", action="version", version="Instinct Bridge 0.5.0")
+    parser.add_argument("--version", action="version", version="Instinct Bridge 0.5.1")
     parser.add_argument("--open", action="store_true", help="Open the local app in your browser")
     args = parser.parse_args()
     if not 1024 <= args.port <= 65535:

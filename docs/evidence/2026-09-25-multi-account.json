@@ -1,0 +1,26 @@
+{
+  "checked_at": "2026-09-24T23:36:57.659446+00:00",
+  "data": "synthetic",
+  "same_title_and_service": true,
+  "distinct_source_ids": true,
+  "created": [
+    "created",
+    "created"
+  ],
+  "exact_readback": [
+    true,
+    true
+  ],
+  "cross_account_mismatch_rejected": [
+    true,
+    true
+  ],
+  "repeat": [
+    "already_present",
+    "already_present"
+  ],
+  "vault_entry_count": 2,
+  "both_labels_visible_in_vault": true,
+  "both_usernames_visible_in_labels": true,
+  "cleanup_verified": true
+}

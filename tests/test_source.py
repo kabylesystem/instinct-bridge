@@ -95,6 +95,37 @@ class SourceTests(unittest.TestCase):
         with self.assertRaisesRegex(MigrationError, "Duplicate Bitwarden item IDs"):
             loads_plan(json.dumps(data), allow_partial=True, migration_names=True)
 
+    def test_same_service_accounts_show_their_usernames_without_losing_identity(self):
+        data = self.data()
+        first = data["items"][0]
+        first["name"] = "Same service"
+        first["login"]["username"] = "first@example.invalid"
+        first["login"]["uris"] = [{"uri": "https://same-service.example.invalid/one"}]
+        second = copy.deepcopy(first)
+        second["id"] = "00000000-0000-4000-8000-000000000003"
+        second["login"]["username"] = "second@example.invalid"
+        data["items"].append(second)
+        plan = loads_plan(json.dumps(data), allow_partial=True, migration_names=True)
+        self.assertEqual(len(plan.logins), 2)
+        for login, username in zip(plan.logins, ("first@example.invalid", "second@example.invalid")):
+            self.assertIn("same-service.example.invalid", login.name)
+            self.assertIn("login: " + username, login.name)
+            self.assertTrue(login.name.endswith(f"[bw:{login.source_id}]"))
+            self.assertLessEqual(len(login.name), 240)
+            self.assertEqual(login.username, username)
+        self.assertNotEqual(plan.logins[0].name, plan.logins[1].name)
+
+    def test_long_migration_name_keeps_account_hint_and_marker(self):
+        data = self.data()
+        data["items"][0]["name"] = "Long title " * 200
+        data["items"][0]["login"]["username"] = "long-account-" * 30 + "\n"
+        data["items"][0]["login"]["uris"] = [{"uri": "https://" + "long." * 18 + "example.invalid"}]
+        login = loads_plan(json.dumps(data), allow_partial=True, migration_names=True).logins[0]
+        self.assertLessEqual(len(login.name), 240)
+        self.assertIn(" · login: long-account-", login.name)
+        self.assertNotIn("\n", login.name)
+        self.assertTrue(login.name.endswith(f"[bw:{login.source_id}]"))
+
     def test_migration_mode_accepts_untitled_credential_with_stable_id(self):
         data = self.data()
         data["items"][0]["name"] = "  "
