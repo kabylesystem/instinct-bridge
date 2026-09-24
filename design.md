@@ -27,5 +27,8 @@ Kusaila prioritized the practical migration of logins, passwords and their sites
 ## Launch usability — 2026-09-25
 The project lives under a directory containing a space. Give shell instructions as a short command available on `PATH`, or as a relative path after changing into the repository. Never give an unquoted absolute path with spaces as the primary launch command. Verify launch commands in Kusaila's actual fish shell before handing them over.
 
+## Large-vault usability — 2026-09-25
+The primary action must stay visible above the account table. Fold the list by default for large exports, show the selected total near the action, and let users search and deselect individual entries on demand. Keep Authy setup behind an optional disclosure. Show count-only progress throughout a transfer so long batches are understandable without exposing credentials.
+
 ## Password visibility — 2026-09-25
 The review must distinguish a credential with a saved password from a passwordless login. Show presence and totals without sending password values to the browser preview. Keep plaintext password verification in the background transfer path; the results column describes transfer state, not source content.

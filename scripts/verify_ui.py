@@ -39,11 +39,13 @@ try:
         page.on('pageerror', lambda _: errors.append('JavaScript exception'))
         page.on('console', lambda message: errors.append('Browser console error') if message.type=='error' else None)
         page.goto(url,wait_until='networkidle')
+        expect(page.locator('#preview')).to_be_disabled()
+        assert not page.locator('#authy-option').evaluate('(element) => element.open')
         page.screenshot(path=str(artifacts/'desktop-load.png'),full_page=True)
         page.locator('#demo').click()
         expect(page.locator('#review')).to_be_visible()
         expect(page.locator('.authy-select')).to_have_value('0')
-        expect(page.locator('#connect')).to_be_disabled()
+        assert page.locator('#connect').count()==0, 'Redundant connection action is still visible'
         page.screenshot(path=str(artifacts/'desktop-review.png'),full_page=True)
         page.set_viewport_size({'width':390,'height':844})
         page.screenshot(path=str(artifacts/'mobile-review.png'),full_page=True)
@@ -53,7 +55,35 @@ try:
         page.screenshot(path=str(artifacts/'mobile-load.png'),full_page=True)
         report.update(demo_pairing=True, demo_transfer_disabled=True, mobile_no_overflow=True)
         page.set_viewport_size({'width':1440,'height':1080})
+        batch = {'encrypted':False,'items':[{'id':f'00000000-0000-4000-8000-{i:012d}',
+            'type':1,'name':f'Synthetic account {i}','login':{'username':f'user-{i}@example.invalid',
+            'password':'SYNTHETIC-demo-only'}} for i in range(1,463)]}
+        page.locator('#bitwarden-file').set_input_files({'name':'synthetic-batch.json',
+            'mimeType':'application/json','buffer':json.dumps(batch).encode()})
+        expect(page.locator('#preview')).to_be_enabled()
+        page.locator('#preview').click()
+        expect(page.locator('#review')).to_be_visible()
+        assert not page.locator('#accounts-details').evaluate('(element) => element.open')
+        expect(page.locator('#transfer')).to_be_visible()
+        page.screenshot(path=str(artifacts/'desktop-batch-review.png'),full_page=True)
+        page.locator('#accounts-details > summary').click()
+        page.locator('#account-search').fill('Synthetic account 417')
+        assert page.locator('#account-rows tr:visible').count()==1, 'Search did not narrow the review list'
+        visible_account = page.locator('#account-rows tr:visible .account-select')
+        visible_account.uncheck()
+        expect(page.locator('#selection-count')).to_have_text('461 accounts selected')
+        expect(page.locator('#transfer-label')).to_have_text('Transfer 461 accounts')
+        visible_account.check()
+        expect(page.locator('#selection-count')).to_have_text('462 accounts selected')
+        page.set_viewport_size({'width':390,'height':844})
+        page.screenshot(path=str(artifacts/'mobile-batch-review.png'),full_page=True)
+        assert page.evaluate('document.documentElement.scrollWidth <= innerWidth'), 'Mobile batch review overflows'
+        page.locator('#clear').click()
+        page.set_viewport_size({'width':1440,'height':1080})
+        report['large_review_collapsed_and_searchable']=True
         page.locator('#bitwarden-file').set_input_files(fixtures/'bitwarden-pbkdf2-synthetic.json')
+        page.locator('#authy-option > summary').click()
+        page.locator('#authy-option .optional-content details > summary').click()
         page.locator('#authy-file').set_input_files(fixtures/'authy-encrypted-synthetic.json')
         page.locator('#bitwarden-password').fill(password)
         page.locator('#authy-password').fill(password)
@@ -67,9 +97,23 @@ try:
             # The single transfer click connects, then writes and verifies.
             page.locator('#transfer').click()
             expect(page.locator('#result-0')).to_have_text('Transferred & verified',timeout=90000)
+            expect(page.locator('#transfer-progress')).to_be_visible()
+            expect(page.locator('#transfer-meter')).to_have_attribute('value','1')
             report['single_transfer_click']=True
             report['live_transfer_verified']=True
-            expect(page.locator('#transfer')).to_be_enabled(timeout=60000)
+            report['visible_progress']=True
+            expect(page.locator('#transfer')).to_be_disabled()
+            page.locator('#clear').click()
+            page.locator('#bitwarden-file').set_input_files(fixtures/'bitwarden-pbkdf2-synthetic.json')
+            if not page.locator('#authy-option').evaluate('(element) => element.open'):
+                page.locator('#authy-option > summary').click()
+            if not page.locator('#authy-option .optional-content details').evaluate('(element) => element.open'):
+                page.locator('#authy-option .optional-content details > summary').click()
+            page.locator('#authy-file').set_input_files(fixtures/'authy-encrypted-synthetic.json')
+            page.locator('#bitwarden-password').fill(password)
+            page.locator('#authy-password').fill(password)
+            page.locator('#preview').click()
+            expect(page.locator('#review')).to_be_visible()
             page.locator('#transfer').click()
             expect(page.locator('#result-0')).to_have_text('Already present · verified',timeout=60000)
             report['repeat_skipped_and_verified']=True

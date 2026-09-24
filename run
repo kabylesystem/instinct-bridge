@@ -1,0 +1,29 @@
+#!/bin/sh
+# One-command source launcher; tested on Linux.
+set -eu
+bridge_root=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+cd "$bridge_root"
+
+if [ ! -x .venv/bin/instinct-bridge-ui ]; then
+    bridge_python=
+    for candidate in python3.14 python3.13 python3.12 python3; do
+        if command -v "$candidate" >/dev/null 2>&1 &&
+           "$candidate" -c 'import sys; raise SystemExit(sys.version_info < (3, 12))' >/dev/null 2>&1; then
+            bridge_python=$candidate
+            break
+        fi
+    done
+    if [ -z "$bridge_python" ]; then
+        printf '%s\n' 'Instinct Bridge needs Python 3.12 or newer for the source launcher.' >&2
+        exit 1
+    fi
+    printf '%s\n' 'Installing Instinct Bridge locally (first launch only)…'
+    "$bridge_python" -m venv .venv
+    .venv/bin/python -m pip install -e '.[iphone]'
+fi
+
+if [ "${1-}" = '--no-open' ]; then
+    shift
+    exec .venv/bin/instinct-bridge-ui "$@"
+fi
+exec .venv/bin/instinct-bridge-ui --open "$@"

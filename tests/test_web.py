@@ -1,10 +1,12 @@
 from contextlib import contextmanager
 import json
 from pathlib import Path
+import threading
 import unittest
 from unittest.mock import patch
 
 from instinct_bridge.web import create_app
+from instinct_bridge.source import MigrationError
 
 FIXTURES = Path(__file__).parent / 'fixtures'
 class WebTests(unittest.TestCase):
@@ -12,12 +14,21 @@ class WebTests(unittest.TestCase):
         self.fingerprint = 'synthetic-session'
         self.writes = []
         self.conflict_first = False
+        self.fail_second = False
+        self.transfer_started = None
+        self.allow_transfer = None
         outer = self
         class Destination:
             def inventory(self): return []
             def transfer(self, item):
+                if outer.transfer_started:
+                    outer.transfer_started.set()
+                    if not outer.allow_transfer.wait(5):
+                        raise MigrationError('Synthetic transfer wait expired.')
                 if outer.conflict_first and item.source_index == 0:
                     return {'status':'conflict','verified':False}
+                if outer.fail_second and item.source_index == 1:
+                    raise MigrationError('Synthetic read-back failed.')
                 outer.writes.append(item)
                 return {'status':'created','verified':True}
         @contextmanager
@@ -47,6 +58,7 @@ class WebTests(unittest.TestCase):
     def test_token_origin_host_and_body_protection(self):
         for headers in ({}, {'Origin':'http://evil.invalid','X-Bridge-Token':'synthetic-token'}, {'Origin':'http://127.0.0.1:8765','X-Bridge-Token':'wrong'}):
             self.assertEqual(self.post('demo', headers=headers).status_code, 403)
+        self.assertEqual(self.post('progress', headers={}).status_code, 403)
         self.assertEqual(self.client.get('/', base_url='http://evil.invalid').status_code, 403)
         self.assertEqual(self.post('demo', []).status_code, 400)
         response = self.client.get('/', base_url='http://127.0.0.1:8765')
@@ -133,6 +145,46 @@ class WebTests(unittest.TestCase):
         self.assertEqual([x['status'] for x in result.json['results']], ['conflict','created'])
         self.assertEqual(result.json['not_attempted'], 0)
         self.assertEqual(len(self.writes), 1)
+
+    def test_progress_remains_readable_while_transfer_holds_operation_lock(self):
+        revision = self.preview()
+        self.post('connect')
+        self.transfer_started = threading.Event()
+        self.allow_transfer = threading.Event()
+        outcome = {}
+        def run_transfer():
+            with self.app.test_client() as writer:
+                outcome['response'] = writer.post('/api/transfer', json=self.transfer_payload(revision),
+                    base_url='http://127.0.0.1:8765', headers=self.headers)
+        worker = threading.Thread(target=run_transfer)
+        worker.start()
+        try:
+            self.assertTrue(self.transfer_started.wait(5))
+            current = self.post('progress')
+            self.assertEqual(current.status_code, 200)
+            self.assertTrue(current.json['active'])
+            self.assertEqual((current.json['done'],current.json['total']), (0,1))
+            self.assertNotIn('SYNTHETIC-account-password', current.get_data(as_text=True))
+        finally:
+            self.allow_transfer.set()
+            worker.join(5)
+        self.assertFalse(worker.is_alive())
+        self.assertTrue(outcome['response'].json['verified'])
+        finished = self.post('progress').json
+        self.assertEqual((finished['active'],finished['done'],finished['created']), (False,1,1))
+
+    def test_readback_error_returns_uncertain_result_and_stops_batch(self):
+        items = [{'id':f'00000000-0000-4000-8000-{i:012d}', 'type':1,
+                  'name':f'Synthetic {i}', 'login':{'password':f'SYNTHETIC-{i}'}} for i in (1,2)]
+        response = self.post('preview', {'bitwarden':json.dumps({'encrypted':False,'items':items})})
+        self.post('connect')
+        self.fail_second = True
+        result = self.post('transfer', {'revision':response.json['revision'], 'selected':[0,1],
+                                        'mapping':{}, 'acknowledge_scope':True})
+        self.assertEqual(result.status_code, 200)
+        self.assertEqual([x['status'] for x in result.json['results']], ['created','uncertain'])
+        self.assertFalse(result.json['verified'])
+        self.assertEqual(self.post('progress').json['phase'], 'stopped')
 
     def test_iphone_start_requires_explicit_capture_action(self):
         result=self.post('iphone/start')

@@ -25,7 +25,7 @@ def create_app(token, expected_host, destination_factory=brave_session, capture_
     app = Flask(__name__, static_folder=None)
     app.config["MAX_CONTENT_LENGTH"] = 35 * 1024 * 1024
     state = {"plan": None, "authy": [], "revision": "", "touched": 0,
-             "demo": False, "connection": None}
+             "demo": False, "connection": None, "progress": None}
     lock = threading.Lock()
     origin = "http://" + expected_host
     capture = capture_factory()
@@ -70,7 +70,7 @@ def create_app(token, expected_host, destination_factory=brave_session, capture_
             raise MigrationError("Another operation is running. Wait for it to finish.")
         try:
             if state["touched"] and time.monotonic() - state["touched"] > TTL:
-                state.update(plan=None, authy=[], revision="", connection=None, demo=False)
+                state.update(plan=None, authy=[], revision="", connection=None, demo=False, progress=None)
             state["touched"] = time.monotonic()
             yield
         finally:
@@ -101,7 +101,7 @@ def create_app(token, expected_host, destination_factory=brave_session, capture_
         payload = request.get_json()
         with exclusive():
             # Failed replacement invalidates the old preview rather than leaving stale secrets actionable.
-            state.update(plan=None, authy=[], revision="", connection=None, demo=False)
+            state.update(plan=None, authy=[], revision="", connection=None, demo=False, progress=None)
             raw = payload.get("bitwarden", "")
             if not isinstance(raw, str):
                 raise MigrationError("Select a Bitwarden JSON export.")
@@ -120,7 +120,7 @@ def create_app(token, expected_host, destination_factory=brave_session, capture_
                 accounts = []  # Keys are already bound to their own standalone entries.
             else:
                 raise MigrationError("Choose a Bitwarden export or connect Authy first.")
-            state.update(plan=plan, authy=accounts, revision=secrets.token_hex(16))
+            state.update(plan=plan, authy=accounts, revision=secrets.token_hex(16), progress=None)
             if payload.get("use_capture") is True:
                 capture.stop(clear=True)
             return jsonify(summary())
@@ -138,7 +138,7 @@ def create_app(token, expected_host, destination_factory=brave_session, capture_
             accounts = load_authy(json.dumps([{"id": "demo-1", "name": "alex@example.invalid",
                 "issuer": "GitHub", "decrypted_seed": "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ", "digits": 6}]))
             state.update(plan=loads_plan(json.dumps(data), allow_partial=True, migration_names=True), authy=accounts,
-                         revision=secrets.token_hex(16), demo=True, connection=None)
+                         revision=secrets.token_hex(16), demo=True, connection=None, progress=None)
             return jsonify(summary())
 
     @app.post("/api/iphone/start")
@@ -182,6 +182,13 @@ def create_app(token, expected_host, destination_factory=brave_session, capture_
                     raise MigrationError("Could not identify the destination session.")
                 return jsonify(connected=True, entries=len(inventory))
 
+    @app.post("/api/progress")
+    def progress():
+        # This read must remain available while transfer holds the operation lock.
+        # Only counts are exposed; each update replaces the whole snapshot atomically.
+        return jsonify(state["progress"] or {"active": False, "done": 0, "total": 0,
+                                              "created": 0, "already_present": 0, "conflict": 0})
+
     @app.post("/api/transfer")
     def transfer():
         payload = request.get_json()
@@ -205,24 +212,45 @@ def create_app(token, expected_host, destination_factory=brave_session, capture_
             if not state["connection"]:
                 raise MigrationError("Connect to Instinct before transferring.")
             results = []
-            with destination_factory() as destination:
-                if getattr(destination, "session_fingerprint", None) != state["connection"]:
-                    state["connection"] = None
-                    raise MigrationError("The Instinct session changed. Connect and review the destination again.")
-                for i in selected:
-                    result = destination.transfer(logins[i])
-                    results.append({"index": i, "name": logins[i].name, **result})
-                    # A known conflict leaves that entry untouched; continue with
-                    # independent accounts. An uncertain write stops the batch.
-                    if result["status"] != "conflict" and not result["verified"]:
-                        break
+            progress = {"active": True, "phase": "connecting", "done": 0, "total": len(selected),
+                        "created": 0, "already_present": 0, "conflict": 0}
+            state["progress"] = progress
+            try:
+                with destination_factory() as destination:
+                    if getattr(destination, "session_fingerprint", None) != state["connection"]:
+                        state["connection"] = None
+                        raise MigrationError("The Instinct session changed. Connect and review the destination again.")
+                    state["progress"] = {**progress, "phase": "transferring"}
+                    for i in selected:
+                        try:
+                            result = destination.transfer(logins[i])
+                        except MigrationError:
+                            # The write may have committed before read-back failed.
+                            # Report uncertainty, stop, and let a later run reconcile.
+                            result = {"status": "uncertain", "verified": False}
+                        results.append({"index": i, "name": logins[i].name, **result})
+                        status = result["status"]
+                        progress = {**progress, "phase": "transferring", "done": len(results),
+                                    "created": progress["created"] + (status == "created"),
+                                    "already_present": progress["already_present"] + (status == "already_present"),
+                                    "conflict": progress["conflict"] + (status == "conflict")}
+                        state["progress"] = progress
+                        # A known conflict leaves that entry untouched; continue with
+                        # independent accounts. An uncertain write stops the batch.
+                        if status != "conflict" and not result["verified"]:
+                            break
+            finally:
+                state["progress"] = {**progress, "active": False,
+                                     "phase": "complete" if len(results) == len(selected) and
+                                     all(x["verified"] or x["status"] == "conflict" for x in results)
+                                     else "stopped"}
             return jsonify(results=results, not_attempted=len(selected) - len(results),
                            verified=all(x["verified"] for x in results) and len(results) == len(selected))
 
     @app.post("/api/clear")
     def clear():
         with exclusive():
-            state.update(plan=None, authy=[], revision="", connection=None, demo=False)
+            state.update(plan=None, authy=[], revision="", connection=None, demo=False, progress=None)
             capture.stop(clear=True)
         return jsonify(cleared=True)
 
@@ -230,7 +258,7 @@ def create_app(token, expected_host, destination_factory=brave_session, capture_
     def quit_app():
         with exclusive():
             cleanup = capture.status()["profile_downloaded"]
-            state.update(plan=None, authy=[], revision="", connection=None, demo=False)
+            state.update(plan=None, authy=[], revision="", connection=None, demo=False, progress=None)
             capture.stop(clear=True)
             app.config["STOP_EVICTION"] = True
             shutdown = app.config.get("SHUTDOWN")
@@ -245,7 +273,7 @@ def create_app(token, expected_host, destination_factory=brave_session, capture_
             if lock.acquire(blocking=False):
                 try:
                     if state["touched"] and time.monotonic() - state["touched"] > TTL:
-                        state.update(plan=None, authy=[], revision="", connection=None, demo=False)
+                        state.update(plan=None, authy=[], revision="", connection=None, demo=False, progress=None)
                 finally:
                     lock.release()
     threading.Thread(target=expire, daemon=True).start()
@@ -255,7 +283,7 @@ def create_app(token, expected_host, destination_factory=brave_session, capture_
 def main():
     parser = argparse.ArgumentParser(description="Start Instinct Bridge on this computer only")
     parser.add_argument("--port", type=int, default=8765)
-    parser.add_argument("--version", action="version", version="Instinct Bridge 0.4.1")
+    parser.add_argument("--version", action="version", version="Instinct Bridge 0.5.0")
     parser.add_argument("--open", action="store_true", help="Open the local app in your browser")
     args = parser.parse_args()
     if not 1024 <= args.port <= 65535:

@@ -2,9 +2,9 @@
 
 A local app to move Bitwarden logins and recoverable Authy 2FA keys into Instinct, with account selection, explicit pairing, and verification after transfer.
 
-**Preview 0.4.1.** Tested against a real Instinct vault using synthetic credentials and a full login migration. The UI accepts Bitwarden logins with duplicate titles and supports repeat imports from later exports. It is a login/TOTP bridge, not a complete-vault migration tool. **Extraction from an actual Authy iPhone remains unvalidated.** Independent of Instinct, Bitwarden, and Twilio.
+**Preview 0.5.0.** Tested against a real Instinct vault using synthetic credentials and a full login migration. The UI accepts Bitwarden logins with duplicate titles and supports repeat imports from later exports. It is a login/TOTP bridge, not a complete-vault migration tool. **Extraction from an actual Authy iPhone remains unvalidated.** Independent of Instinct, Bitwarden, and Twilio.
 
-![Local account review using synthetic data](docs/evidence/desktop-review.png)
+![Local account review using 462 synthetic accounts](docs/evidence/desktop-batch-review.png)
 
 ## Run locally
 
@@ -12,24 +12,23 @@ Verified on CachyOS/Linux with Brave: Python source installation and a standalon
 
 For the executable, download the `InstinctBridge-linux-x86_64` artifact from a successful **Desktop build** GitHub Actions run, extract it, allow execution (`chmod +x InstinctBridge`), and open `InstinctBridge`. It opens the local app in your browser. Brave must already be installed and signed in to Instinct. These are unsigned preview builds.
 
-For a source installation with iPhone support, use Python 3.12 or newer:
+For a source installation with Python 3.12 or newer:
 
 ```bash
-cd /path/to/instinct-bridge
-python3 -m venv .venv
-.venv/bin/pip install -e '.[iphone]'
-.venv/bin/instinct-bridge-ui --open
+git clone https://github.com/kabylesystem/instinct-bridge.git
+cd instinct-bridge
+./run
 ```
 
-Run these commands **from the cloned repository**; the relative `.venv/bin/...` path also works when its parent directory contains spaces. In fish, quote any absolute path that contains spaces. The app binds to `127.0.0.1`; without `--open`, use the private link printed in the terminal. The desktop executable opens the local interface automatically; `--no-open` disables this. Keep the terminal open. Sign in to [Instinct](https://app.instinct.com/vault) in your regular Brave profile before connecting.
+The first run installs dependencies in the repository's local `.venv`, including the optional iPhone capture support. Later runs start directly. `./run --no-open` keeps your browser untouched and prints a private local link. The app binds to `127.0.0.1`; keep the terminal open. Sign in to [Instinct](https://app.instinct.com/vault) in your regular Brave profile before transferring. The folder name may contain spaces; the relative `./run` command still works.
 
-1. Select a Bitwarden JSON export, or use Authy alone. Portable password-protected exports support PBKDF2 and Argon2id; account-restricted backups are rejected. Enter the **export password**, which stays local.
-2. Click **Connect Authy on iPhone** and follow the temporary certificate/proxy instructions on the phone. Compare the received key count with Authy, finish capture, remove the phone proxy/profile, then enter the backup password locally. Existing token JSON files also work. See the [iPhone guide](docs/authy-iphone.md).
-3. Review the selected accounts, site hostnames, password-presence indicators and Authy pairings. Password values are deliberately absent from the browser preview. Unsupported fields are reported and stay in Bitwarden.
-4. Click **Transfer & verify**. The bridge connects to Instinct automatically. The bridge reads each stored credential back to verify it.
-5. Click **Quit** to close the local app and release loaded data. Keep Authy until real service logins have been checked.
+1. Choose a Bitwarden JSON export and click **Review export**. If encrypted, enter the **export password**; it stays local. Portable password-protected exports support PBKDF2 and Argon2id; account-restricted backups are rejected.
+2. Check the summary and click **Transfer accounts**. The app connects to Instinct automatically, shows progress and reads each stored credential back to verify it. Open **Review or change individual accounts** only if you want to search, exclude, or inspect individual logins. Password values stay hidden in the preview.
+3. Click **Quit** when finished. Keep Bitwarden until you have checked real service logins.
 
-“Explore with sample data” runs a preview that cannot connect to or write to a real vault.
+Authy is optional. Open **Also moving Authy codes?** before reviewing if you want to capture keys from an iPhone or load an existing token JSON file. Guided capture needs manual certificate/proxy approval on the phone; compare the received count with Authy, finish capture, remove the proxy/profile, and enter the backup password locally. See the [iPhone guide](docs/authy-iphone.md). Keep Authy installed until real 2FA logins have been checked.
+
+**Try a safe demo** runs a preview that cannot connect to or write to a real vault.
 
 ## Supported scope
 
