@@ -28,10 +28,11 @@ function update(){
   const count=selected().length;$('selection-count').textContent=`${count} account${count===1?'':'s'} selected`;$('transfer').disabled=busy||!count||Boolean(preview?.demo);}
 function render(data){
   preview=data;connected=false;$('review').hidden=false;$('sources').hidden=true;$('demo-label').hidden=!data.demo;$('account-rows').replaceChildren();$('authy-rows').replaceChildren();$('issue-list').replaceChildren();
-  $('counts').textContent=`${noun(data.accounts.length,'login')} ready · ${noun(data.report.with_site,'site')} identified · ${noun(data.report.withheld,'item')} withheld · ${noun(data.authy.length,'Authy key')}`;
+  $('counts').textContent=`${noun(data.accounts.length,'login')} ready · ${data.report.with_password===undefined?'':noun(data.report.with_password,'password')+' · '}${noun(data.report.with_site,'site')} identified · ${noun(data.report.withheld,'item')} withheld · ${noun(data.authy.length,'Authy key')}`;
   for(const a of data.accounts){
     const row=elem('tr');const check=elem('input');check.type='checkbox';check.className='account-select';check.value=a.index;check.checked=true;check.setAttribute('aria-label',`Select ${a.name}`);check.addEventListener('change',update);
     const cell=elem('td');cell.append(check);const account=elem('td',a.name,'account-name');account.title=`Instinct name: ${a.destination_name}`;
+    if(a.has_password!==undefined)account.append(elem('small',a.has_password?'Password saved':'No password in export','password-state'));
     row.append(cell,account,elem('td',a.site||'—','site'),elem('td',a.username||'No username','username'),elem('td',a.has_totp?'Saved in Bitwarden':'Not paired','badge'));
     row.lastElementChild.id='pair-'+a.index;
     const status=elem('td','Not transferred','status');status.id='result-'+a.index;row.append(status);$('account-rows').append(row);

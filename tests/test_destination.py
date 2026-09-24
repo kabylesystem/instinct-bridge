@@ -73,6 +73,32 @@ class DestinationTests(unittest.TestCase):
         self.assertEqual(destination.transfer(item)["status"], "already_present")
         self.assertEqual(destination.writes, 0)
 
+    def test_readback_skips_empty_fields_that_instinct_cannot_reveal(self):
+        class Destination(Instinct):
+            def __init__(self, present, value):
+                self.present, self.value, self.revealed = present, value, []
+
+            def inventory(self):
+                return [{"kind":"login", "name":"SYNTHETIC", "fields":[
+                    {"key":key, "populated":key == self.present}
+                    for key in ("username", "password", "totp")]}]
+
+            def call(self, query, variables):
+                self.revealed.append(variables["key"])
+                if variables["key"] != self.present:
+                    raise MigrationError("Instinct refuses empty field reveal")
+                return {"revealVaultSubfieldValue":self.value}
+
+        for present, username, password in (("password", "", "fake"),
+                                            ("username", "test@example.invalid", "")):
+            with self.subTest(present=present):
+                destination = Destination(present, password or username)
+                self.assertTrue(all(destination.verify(Login("SYNTHETIC", username, password)).values()))
+                self.assertEqual(destination.revealed, [present])
+        destination = Destination("password", "fake")
+        self.assertFalse(destination.verify(self.item)["username"])
+        self.assertEqual(destination.revealed, ["password"])
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -81,6 +81,7 @@ def create_app(token, expected_host, destination_factory=brave_session, capture_
         return {"revision": state["revision"], "demo": state["demo"],
                 "accounts": [] if not plan else [{"index": i, "name": x.source_name or x.name,
                     "destination_name": x.name, "site": x.site, "username": x.username,
+                    "has_password": bool(x.password),
                     "has_totp": x.totp is not None, "source_index": x.source_index}
                     for i, x in enumerate(plan.logins)],
                 "report": plan.report() if plan else None,
@@ -254,7 +255,7 @@ def create_app(token, expected_host, destination_factory=brave_session, capture_
 def main():
     parser = argparse.ArgumentParser(description="Start Instinct Bridge on this computer only")
     parser.add_argument("--port", type=int, default=8765)
-    parser.add_argument("--version", action="version", version="Instinct Bridge 0.4.0")
+    parser.add_argument("--version", action="version", version="Instinct Bridge 0.4.1")
     parser.add_argument("--open", action="store_true", help="Open the local app in your browser")
     args = parser.parse_args()
     if not 1024 <= args.port <= 65535:

@@ -100,6 +100,7 @@ class Plan:
 
     def report(self) -> dict:
         return {"source_items": self.source_count, "ready": len(self.logins),
+                "with_password": sum(bool(x.password) for x in self.logins),
                 "with_totp": sum(x.totp is not None for x in self.logins),
                 "with_site": sum(bool(x.site) for x in self.logins),
                 "withheld": sum(not x.get("partial", False) for x in self.issues),

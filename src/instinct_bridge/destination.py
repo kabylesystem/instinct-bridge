@@ -113,12 +113,20 @@ class Instinct:
         matches = [x for x in self.inventory() if x["kind"] == "login" and x["name"] == item.name]
         if len(matches) != 1:
             return {"record": False}
-        extra = {x["key"] for x in matches[0]["fields"] if x["populated"]} - expected_keys
+        populated = {x["key"]: bool(x["populated"]) for x in matches[0]["fields"]}
+        extra = {key for key, present in populated.items() if present} - expected_keys
         checks = {"no_extra_fields": not extra}
         for key, expected in (("username", item.username), ("password", item.password)):
+            if not populated.get(key, False):
+                # Instinct rejects reveal requests for unpopulated fields.
+                checks[key] = not expected
+                continue
             actual = self.call(REVEAL, {"kind": "login", "name": item.name, "key": key})["revealVaultSubfieldValue"]
-            checks[key] = actual == expected or (not expected and actual is None)
+            checks[key] = actual == expected
         if item.totp:
+            if not populated.get("totp", False):
+                checks["totp_configuration"] = False
+                return checks
             actual = self.call(REVEAL, {"kind": "login", "name": item.name, "key": "totp"})["revealVaultSubfieldValue"]
             try:
                 stored = parse_totp(actual)

@@ -26,3 +26,6 @@ Kusaila prioritized the practical migration of logins, passwords and their sites
 
 ## Launch usability — 2026-09-25
 The project lives under a directory containing a space. Give shell instructions as a short command available on `PATH`, or as a relative path after changing into the repository. Never give an unquoted absolute path with spaces as the primary launch command. Verify launch commands in Kusaila's actual fish shell before handing them over.
+
+## Password visibility — 2026-09-25
+The review must distinguish a credential with a saved password from a passwordless login. Show presence and totals without sending password values to the browser preview. Keep plaintext password verification in the background transfer path; the results column describes transfer state, not source content.

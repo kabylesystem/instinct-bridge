@@ -69,6 +69,17 @@ class WebTests(unittest.TestCase):
         self.post('clear')
         self.assertEqual(self.post('transfer',payload).status_code, 400)
 
+    def test_preview_exposes_password_presence_without_values(self):
+        result = self.post('preview', {'bitwarden':json.dumps({'encrypted':False,'items':[
+            {'id':'00000000-0000-4000-8000-000000000091','type':1,'name':'With password',
+             'login':{'username':'synthetic@example.invalid','password':'SYNTHETIC-private-value'}},
+            {'id':'00000000-0000-4000-8000-000000000092','type':1,'name':'Without password',
+             'login':{'username':'synthetic@example.invalid','password':''}}]})})
+        self.assertEqual(result.status_code, 200)
+        self.assertEqual([x['has_password'] for x in result.json['accounts']], [True, False])
+        self.assertEqual(result.json['report']['with_password'], 1)
+        self.assertNotIn('SYNTHETIC-private-value', result.get_data(as_text=True))
+
     def test_scope_mapping_and_selection_guards(self):
         revision = self.preview(True)
         self.post('connect')
