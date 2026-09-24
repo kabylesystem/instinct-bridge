@@ -80,7 +80,7 @@ def load_authy(raw, password=""):
 def match_candidates(account, logins):
     """Suggestions only: ambiguous labels never silently bind a seed to a login."""
     service_matches = [i for i, login in enumerate(logins)
-                       if login.name.casefold() in {account.name.casefold(), account.issuer.casefold()}]
+                       if (login.source_name or login.name).casefold() in {account.name.casefold(), account.issuer.casefold()}]
     return service_matches or [i for i, login in enumerate(logins)
                               if login.username and login.username.casefold() == account.name.casefold()]
 

@@ -22,7 +22,8 @@ artifacts = root/'docs/evidence'
 artifacts.mkdir(parents=True, exist_ok=True)
 url = re.search(r'http://127\.0\.0\.1:\d+/#\S+', args.launch_log.read_text()).group()
 password = 'SYNTHETIC-export-password'
-source = load_plan(fixtures/'bitwarden-pbkdf2-synthetic.json', password)
+source = load_plan(fixtures/'bitwarden-pbkdf2-synthetic.json', password,
+                   allow_partial=True, migration_names=True)
 accounts = load_authy((fixtures/'authy-encrypted-synthetic.json').read_text(), password)
 item = attach_authy(source.logins, accounts, {'synthetic-authy-1':0})[0]
 report = {'checked_at':datetime.now(timezone.utc).isoformat(), 'data':'synthetic', 'iphone_capture_tested':False}

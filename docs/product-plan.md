@@ -53,8 +53,8 @@ Keep raw credentials out of reports and logs. An optional resumable state must b
 4. **Robust transfer:** partial failure, rate limits, session expiry, cancellation, uncertain writes, and resumption.
 5. **Release:** installation tested on each claimed OS, dependency/license review, synthetic demo, compatibility matrix, security contact, versioned release and changelog. Only claim the platforms and formats actually tested.
 
-## Current implementation — Preview 0.3
+## Current implementation — Preview 0.4
 
 Local UI, encrypted Bitwarden PBKDF2/Argon2id input, Authy token decryption, explicit pairing, standalone OTP records, metadata-only preview and destination-session guards are implemented. A single transfer button connects and verifies selected credentials. A Linux standalone executable includes guided, temporary Authy capture; iOS approvals remain manual.
 
-40 tests cover parsing, crypto, web authorization, capture boundaries and cleanup. Real Instinct synthetic transfer/read-back/repeat/conflict/cleanup pass, including a live test of the packaged executable. See docs/evidence. No real source accounts have been migrated. USB pairing is validated, but Authy storage is inaccessible and actual phone extraction remains pending. Full-vault migration, other authenticators and cross-platform runtime support are not delivered.
+45 tests cover parsing, crypto, web authorization, capture boundaries and cleanup. The UI preview accepts duplicate Bitwarden titles, adds a safe site hostname to each target label, and uses source item IDs to skip identical records on later exports. Conflicting changes are not overwritten. Real Instinct synthetic transfer/read-back/repeat/conflict/cleanup pass, including duplicate-title records. See docs/evidence. One real source login was transferred in an earlier targeted test; the user's full export has only been previewed, not imported. USB pairing is validated, but Authy storage is inaccessible and actual phone extraction remains pending. Full-vault migration, other authenticators and cross-platform runtime support are not delivered.

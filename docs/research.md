@@ -63,3 +63,9 @@ A read-only query against the user's authenticated vault reported these native k
 The official [Bitwarden export reference](https://bitwarden.com/help/export-your-data/) documents cards, identities, secure notes and logins in JSON, plus passkeys and SSH keys; attachments are provided through ZIP export. Trash and Sends are omitted, and a personal export does not include organization-owned items. A single personal JSON snapshot therefore cannot mean literally everything in those categories. A new snapshot is also needed to see later Bitwarden changes; this bridge does not watch the Bitwarden vault live.
 
 The 2026-09-25 local live test did import one strictly supported login item and independently read back its supported values. No other source entries were written. The user's source file remains unchanged.
+
+## Login-focused bridge — Preview 0.4
+
+The observed Instinct login kind has no URL subfield. The bridge therefore extracts only a validated HTTP(S) hostname from Bitwarden `login.uris` for the destination name; URL paths, queries and fragments are not copied into that name. A stable marker based on each Bitwarden item UUID separates duplicate titles and permits idempotent reimports. Existing records with that marker are read back; identical records are skipped, changed records conflict. A legacy unmarked record is skipped only when its title and stored credentials match exactly. No live sync or automatic password update is claimed.
+
+A local dry-run of the user's export admitted every login without writing any of them. A separate live synthetic run created two same-title records with different hostnames/IDs, verified repeat skips, and deleted both test records. The UI synthetic E2E checked single-click creation, independent readback, repeat skip, desktop/mobile layout and cleanup. Authy extraction from the actual iPhone is still unvalidated.

@@ -11,10 +11,13 @@ class WebTests(unittest.TestCase):
     def setUp(self):
         self.fingerprint = 'synthetic-session'
         self.writes = []
+        self.conflict_first = False
         outer = self
         class Destination:
             def inventory(self): return []
             def transfer(self, item):
+                if outer.conflict_first and item.source_index == 0:
+                    return {'status':'conflict','verified':False}
                 outer.writes.append(item)
                 return {'status':'created','verified':True}
         @contextmanager
@@ -103,6 +106,22 @@ class WebTests(unittest.TestCase):
         self.assertTrue(result.json['verified'])
         self.assertEqual(self.writes[0].password,'')
         self.assertIsNotNone(self.writes[0].totp)
+
+    def test_known_conflict_does_not_block_new_login_in_same_batch(self):
+        items = [{'id':f'00000000-0000-4000-8000-{i:012d}', 'type':1,
+                  'name':'Duplicate title', 'login':{'username':f'user-{i}@example.invalid',
+                  'password':f'SYNTHETIC-{i}'}} for i in (1,2)]
+        response = self.post('preview', {'bitwarden':json.dumps({'encrypted':False,'items':items})})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json['accounts']), 2)
+        self.conflict_first = True
+        self.post('connect')
+        result = self.post('transfer', {'revision':response.json['revision'], 'selected':[0,1],
+                                        'mapping':{}, 'acknowledge_scope':True})
+        self.assertEqual(result.status_code, 200)
+        self.assertEqual([x['status'] for x in result.json['results']], ['conflict','created'])
+        self.assertEqual(result.json['not_attempted'], 0)
+        self.assertEqual(len(self.writes), 1)
 
     def test_iphone_start_requires_explicit_capture_action(self):
         result=self.post('iphone/start')

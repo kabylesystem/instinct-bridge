@@ -20,3 +20,6 @@ Full-width header with small line mark; three numbered stages; two source panels
 
 ## Simplest supported flow
 Kusaila requested as few clicks as possible: the desktop executable includes dependencies; a single Transfer action connects and verifies. Authy can be used without a Bitwarden file. Phone setup is revealed only on request, with a QR, received-key count, explicit finish and cleanup reminder. iOS trust approvals cannot be represented as automatic. Quit stops the local server and releases its data.
+
+## Scope decision — 2026-09-25
+Kusaila prioritized the practical migration of logins, passwords and their sites over unsupported vault record types. The review table shows source title, hostname and username; a stable Bitwarden ID in the destination name distinguishes duplicate titles and enables later reimports. The full URL is not represented by Instinct's login schema, so the UI states this limitation before transfer. Avoid presenting partial metadata warnings as if they blocked a credential that is otherwise ready.

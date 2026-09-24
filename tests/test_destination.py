@@ -1,4 +1,5 @@
 import unittest
+from dataclasses import replace
 
 from instinct_bridge.destination import Instinct, UPSERT, REVEAL
 from instinct_bridge.source import Login, MigrationError
@@ -52,6 +53,25 @@ class DestinationTests(unittest.TestCase):
     def test_failed_verification_is_not_success(self):
         destination = FakeDestination(verified=False)
         self.assertEqual(destination.transfer(self.item)["status"], "verification_failed")
+
+    def test_stable_source_id_skips_renamed_reimport_and_blocks_changed_password(self):
+        item = replace(self.item, name="First title [bw:00000000-0000-4000-8000-000000000001]",
+                       source_name="First title", source_id="00000000-0000-4000-8000-000000000001")
+        destination = FakeDestination([{"kind": "login", "name": item.name}])
+        renamed = replace(item, name="New title · example.invalid [bw:00000000-0000-4000-8000-000000000001]",
+                          source_name="New title")
+        self.assertEqual(destination.transfer(renamed)["status"], "already_present")
+        self.assertEqual(destination.writes, 0)
+        destination.verified = False
+        self.assertEqual(destination.transfer(renamed)["status"], "conflict")
+        self.assertEqual(destination.writes, 0)
+
+    def test_matching_legacy_entry_is_adopted_without_duplicate_write(self):
+        item = replace(self.item, name="SYNTHETIC · example.invalid [bw:00000000-0000-4000-8000-000000000001]",
+                       source_name="SYNTHETIC", source_id="00000000-0000-4000-8000-000000000001")
+        destination = FakeDestination([{"kind": "login", "name": "SYNTHETIC"}])
+        self.assertEqual(destination.transfer(item)["status"], "already_present")
+        self.assertEqual(destination.writes, 0)
 
 
 if __name__ == "__main__":

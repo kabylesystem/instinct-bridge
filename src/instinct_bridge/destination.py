@@ -10,6 +10,8 @@ import shutil
 import time
 import hashlib
 import os
+import re
+from dataclasses import replace
 from pathlib import Path
 from contextlib import contextmanager
 
@@ -131,7 +133,21 @@ class Instinct:
 
     def transfer(self, item: Login) -> dict:
         # This endpoint is an UPSERT keyed by kind/name: never blindly overwrite.
-        existing = [x for x in self.inventory() if x["kind"] == "login" and x["name"].casefold() == item.name.casefold()]
+        inventory = [x for x in self.inventory() if x["kind"] == "login"]
+        if item.source_id:
+            marker = f" [bw:{item.source_id}]"
+            matched = [x for x in inventory if x["name"].casefold().endswith(marker)]
+            if matched:
+                if len(matched) == 1 and all(self.verify(replace(item, name=matched[0]["name"])).values()):
+                    return {"status": "already_present", "verified": True}
+                return {"status": "conflict", "verified": False}
+            # A record transferred by an older bridge had no marker. Adopt it only
+            # when the title and every stored credential match exactly.
+            legacy = [x for x in inventory if x["name"] == item.source_name and
+                      not re.search(r" \[bw:[0-9a-f-]{36}\]$", x["name"], re.I)]
+            if len(legacy) == 1 and all(self.verify(replace(item, name=legacy[0]["name"])).values()):
+                return {"status": "already_present", "verified": True}
+        existing = [x for x in inventory if x["name"].casefold() == item.name.casefold()]
         if existing:
             if len(existing) == 1 and existing[0]["name"] == item.name and all(self.verify(item).values()):
                 return {"status": "already_present", "verified": True}

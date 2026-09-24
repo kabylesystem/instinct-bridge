@@ -28,16 +28,19 @@ function update(){
   const count=selected().length;$('selection-count').textContent=`${count} account${count===1?'':'s'} selected`;$('transfer').disabled=busy||!count||Boolean(preview?.demo);}
 function render(data){
   preview=data;connected=false;$('review').hidden=false;$('sources').hidden=true;$('demo-label').hidden=!data.demo;$('account-rows').replaceChildren();$('authy-rows').replaceChildren();$('issue-list').replaceChildren();
-  $('counts').textContent=`${noun(data.accounts.length,'account')} available · ${noun(data.report.source_items,'source item')} · ${noun(data.authy.length,'Authy key')}`;
+  $('counts').textContent=`${noun(data.accounts.length,'login')} ready · ${noun(data.report.with_site,'site')} identified · ${noun(data.report.withheld,'item')} withheld · ${noun(data.authy.length,'Authy key')}`;
   for(const a of data.accounts){
     const row=elem('tr');const check=elem('input');check.type='checkbox';check.className='account-select';check.value=a.index;check.checked=true;check.setAttribute('aria-label',`Select ${a.name}`);check.addEventListener('change',update);
-    const cell=elem('td');cell.append(check);row.append(cell,elem('td',a.name,'account-name'),elem('td',a.username||'No username','username'),elem('td',a.has_totp?'Saved in Bitwarden':'Not paired','badge'));
+    const cell=elem('td');cell.append(check);const account=elem('td',a.name,'account-name');account.title=`Instinct name: ${a.destination_name}`;
+    row.append(cell,account,elem('td',a.site||'—','site'),elem('td',a.username||'No username','username'),elem('td',a.has_totp?'Saved in Bitwarden':'Not paired','badge'));
     row.lastElementChild.id='pair-'+a.index;
     const status=elem('td','Not transferred','status');status.id='result-'+a.index;row.append(status);$('account-rows').append(row);
   }
   $('issues').hidden=!data.report.issues.length;
-  for(const issue of data.report.issues.slice(0,30))$('issue-list').append(elem('li',`Source item ${issue.index+1}: ${issue.reason}`));
-  if(data.report.issues.length>30)$('issue-list').append(elem('li',`${data.report.issues.length-30} more items need review. They remain in your source export.`));
+  if(data.report.partial)$('issue-list').append(elem('li',`${noun(data.report.partial,'login')} contain extra Bitwarden fields. Their credentials can move; extra fields remain in Bitwarden.`));
+  const withheld=data.report.issues.filter(issue=>!issue.partial);
+  for(const issue of withheld.slice(0,20))$('issue-list').append(elem('li',`Source item ${issue.index+1}: ${issue.reason}`));
+  if(withheld.length>20)$('issue-list').append(elem('li',`${withheld.length-20} more source items were withheld.`));
   $('pairing').hidden=!data.authy.length;
   for(const a of data.authy){
     const row=elem('div',undefined,'authy-row');const name=elem('div',a.issuer||a.name);name.append(elem('small',a.name));const select=elem('select');select.className='authy-select';select.addEventListener('change',update);select.dataset.id=a.id;select.setAttribute('aria-label',`Pair Authy key ${a.name}`);select.append(new Option('Leave unpaired',''));
@@ -64,7 +67,8 @@ $('transfer').addEventListener('click',()=>action(async()=>{
   const result=await api('transfer',{revision:preview.revision,selected:selection,mapping:mapping(),acknowledge_scope:true,acknowledge_unmapped:$('allow-unmapped').checked});
   const labels={created:'Transferred & verified',already_present:'Already present · verified',conflict:'Conflict · unchanged',uncertain:'Uncertain · check before retry',verification_failed:'Verification failed'};
   for(const row of result.results){$('result-'+row.index).textContent=labels[row.status]||row.status;$('result-'+row.index).classList.toggle('ready',row.verified);}
-  notice(result.verified?`${noun(result.results.length,'selected account')} verified in Instinct.`:`Transfer stopped for review. ${result.not_attempted} selected accounts were not attempted.`,result.verified?'success':'error');
+  const conflicts=result.results.filter(row=>row.status==='conflict').length;
+  notice(result.verified?`${noun(result.results.length,'selected account')} verified in Instinct.`:result.not_attempted?`Transfer stopped for review. ${result.not_attempted} selected accounts were not attempted.`:`Transfer finished. ${noun(conflicts,'conflict')} need review; other accounts were verified.`,result.verified?'success':'error');
 }));
 $('select-all').addEventListener('change',()=>{for(const e of document.querySelectorAll('.account-select'))e.checked=$('select-all').checked;update();});
 

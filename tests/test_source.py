@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from instinct_bridge.source import MigrationError, load_plan, parse_totp
+from instinct_bridge.source import MigrationError, load_plan, loads_plan, parse_totp
 
 FIXTURE = Path(__file__).parent / "fixtures" / "bitwarden-synthetic.json"
 SECRET = "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ"
@@ -73,6 +73,34 @@ class SourceTests(unittest.TestCase):
         data["items"][1]["name"] = data["items"][1]["name"].lower()
         with self.assertRaises(MigrationError):
             self.plan(data)
+
+    def test_migration_mode_keeps_duplicate_titles_distinct_and_hides_url_secrets(self):
+        data = self.data()
+        first = data["items"][0]
+        first["login"]["uris"] = [{"uri": "https://login.example.invalid/private/token?key=TOP-SECRET"}]
+        second = copy.deepcopy(first)
+        second["id"] = "00000000-0000-4000-8000-000000000003"
+        second["name"] = first["name"].lower()
+        second["login"]["uris"] = [{"uri": "https://user:pass@evil.invalid/token"},
+                                    {"uri": "https://second.example.invalid/path"}]
+        data["items"].append(second)
+        plan = loads_plan(json.dumps(data), allow_partial=True, migration_names=True)
+        self.assertEqual(len(plan.logins), 2)
+        self.assertEqual([x.site for x in plan.logins],
+                         ["login.example.invalid", "second.example.invalid"])
+        self.assertEqual(len({x.name.casefold() for x in plan.logins}), 2)
+        self.assertNotIn("TOP-SECRET", json.dumps([x.name for x in plan.logins]))
+        self.assertNotIn("/private", json.dumps([x.name for x in plan.logins]))
+        data["items"][1]["id"] = first["id"]
+        with self.assertRaisesRegex(MigrationError, "Duplicate Bitwarden item IDs"):
+            loads_plan(json.dumps(data), allow_partial=True, migration_names=True)
+
+    def test_migration_mode_accepts_untitled_credential_with_stable_id(self):
+        data = self.data()
+        data["items"][0]["name"] = "  "
+        plan = loads_plan(json.dumps(data), allow_partial=True, migration_names=True)
+        self.assertEqual(len(plan.logins), 1)
+        self.assertTrue(plan.logins[0].name.startswith("Untitled Bitwarden login"))
 
     def test_encrypted_export_fails_closed(self):
         with self.assertRaises(MigrationError):

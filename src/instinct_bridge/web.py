@@ -79,7 +79,8 @@ def create_app(token, expected_host, destination_factory=brave_session, capture_
     def summary():
         plan = state["plan"]
         return {"revision": state["revision"], "demo": state["demo"],
-                "accounts": [] if not plan else [{"index": i, "name": x.name, "username": x.username,
+                "accounts": [] if not plan else [{"index": i, "name": x.source_name or x.name,
+                    "destination_name": x.name, "site": x.site, "username": x.username,
                     "has_totp": x.totp is not None, "source_index": x.source_index}
                     for i, x in enumerate(plan.logins)],
                 "report": plan.report() if plan else None,
@@ -106,7 +107,8 @@ def create_app(token, expected_host, destination_factory=brave_session, capture_
             authy_raw = capture.encrypted_export() if payload.get("use_capture") is True else payload.get("authy", "")
             accounts = load_authy(authy_raw, payload.get("authy_password", "")) if authy_raw else []
             if raw:
-                plan = loads_plan(raw, payload.get("bitwarden_password", ""), allow_partial=True)
+                plan = loads_plan(raw, payload.get("bitwarden_password", ""),
+                                  allow_partial=True, migration_names=True)
             elif accounts:
                 # An Authy-only import uses exact per-token identities, without guessing a password match.
                 logins = [Login((x.issuer + " — " + x.name) if x.issuer and x.issuer != x.name else x.name,
@@ -127,12 +129,14 @@ def create_app(token, expected_host, destination_factory=brave_session, capture_
         with exclusive():
             if capture.status()["active"] or capture.status()["count"]:
                 raise MigrationError("Finish or cancel iPhone capture before opening sample data.")
-            data = {"encrypted": False, "items": [{"type": 1, "name": name,
-                "login": {"username": "alex@example.invalid", "password": "SYNTHETIC-demo-only"}}
-                for name in ("GitHub", "Figma", "Cloudflare", "Notion")]}
+            data = {"encrypted": False, "items": [{"id": f"00000000-0000-4000-8000-{i:012d}",
+                "type": 1, "name": name, "login": {"username": "alex@example.invalid",
+                "password": "SYNTHETIC-demo-only", "uris": [{"uri": f"https://{domain}/login"}]}}
+                for i, (name, domain) in enumerate((("GitHub", "github.com"), ("Figma", "figma.com"),
+                    ("Cloudflare", "dash.cloudflare.com"), ("Notion", "notion.so")), 1)]}
             accounts = load_authy(json.dumps([{"id": "demo-1", "name": "alex@example.invalid",
                 "issuer": "GitHub", "decrypted_seed": "GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ", "digits": 6}]))
-            state.update(plan=loads_plan(json.dumps(data)), authy=accounts,
+            state.update(plan=loads_plan(json.dumps(data), allow_partial=True, migration_names=True), authy=accounts,
                          revision=secrets.token_hex(16), demo=True, connection=None)
             return jsonify(summary())
 
@@ -207,7 +211,9 @@ def create_app(token, expected_host, destination_factory=brave_session, capture_
                 for i in selected:
                     result = destination.transfer(logins[i])
                     results.append({"index": i, "name": logins[i].name, **result})
-                    if not result["verified"]:
+                    # A known conflict leaves that entry untouched; continue with
+                    # independent accounts. An uncertain write stops the batch.
+                    if result["status"] != "conflict" and not result["verified"]:
                         break
             return jsonify(results=results, not_attempted=len(selected) - len(results),
                            verified=all(x["verified"] for x in results) and len(results) == len(selected))
@@ -248,7 +254,7 @@ def create_app(token, expected_host, destination_factory=brave_session, capture_
 def main():
     parser = argparse.ArgumentParser(description="Start Instinct Bridge on this computer only")
     parser.add_argument("--port", type=int, default=8765)
-    parser.add_argument("--version", action="version", version="Instinct Bridge 0.3.0")
+    parser.add_argument("--version", action="version", version="Instinct Bridge 0.4.0")
     parser.add_argument("--open", action="store_true", help="Open the local app in your browser")
     args = parser.parse_args()
     if not 1024 <= args.port <= 65535:

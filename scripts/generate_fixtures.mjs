@@ -4,7 +4,7 @@ import {pbkdf2Sync, argon2Sync, createHash, createHmac, createCipheriv} from 'no
 import {writeFileSync} from 'node:fs';
 const root = new URL('../tests/fixtures/', import.meta.url);
 const password='SYNTHETIC-export-password';
-const data={encrypted:false,items:[{type:1,name:'Instinct Bridge encrypted TEST',login:{username:'bridge@example.invalid',password:'SYNTHETIC-account-password'}}]};
+const data={encrypted:false,items:[{id:'00000000-0000-4000-8000-000000000002',type:1,name:'Instinct Bridge encrypted TEST',login:{username:'bridge@example.invalid',password:'SYNTHETIC-account-password'}}]};
 const b64=x=>x.toString('base64');
 const hmac=(key,x)=>createHmac('sha256',key).update(x).digest();
 function encrypt(text,key,iv){const c=createCipheriv('aes-256-cbc',key,iv);return Buffer.concat([c.update(text),c.final()]);}

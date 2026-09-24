@@ -2,7 +2,7 @@
 
 A local app to move Bitwarden logins and recoverable Authy 2FA keys into Instinct, with account selection, explicit pairing, and verification after transfer.
 
-**Preview 0.3.** Tested against a real Instinct vault using synthetic credentials. This is a login/TOTP bridge, not a complete-vault migration tool. **Extraction from an actual Authy iPhone remains unvalidated.** Independent of Instinct, Bitwarden, and Twilio.
+**Preview 0.4.** Tested against a real Instinct vault using synthetic credentials. The UI accepts Bitwarden logins with duplicate titles and supports repeat imports from later exports. It is a login/TOTP bridge, not a complete-vault migration tool. **Extraction from an actual Authy iPhone remains unvalidated.** Independent of Instinct, Bitwarden, and Twilio.
 
 ![Local account review using synthetic data](docs/evidence/desktop-review.png)
 
@@ -24,7 +24,7 @@ Open the private link printed in the terminal. The app binds to `127.0.0.1`; the
 
 1. Select a Bitwarden JSON export, or use Authy alone. Portable password-protected exports support PBKDF2 and Argon2id; account-restricted backups are rejected. Enter the **export password**, which stays local.
 2. Click **Connect Authy on iPhone** and follow the temporary certificate/proxy instructions on the phone. Compare the received key count with Authy, finish capture, remove the phone proxy/profile, then enter the backup password locally. Existing token JSON files also work. See the [iPhone guide](docs/authy-iphone.md).
-3. Review the selected accounts and Authy pairings. Unsupported fields are reported and stay in Bitwarden.
+3. Review the selected accounts, site hostnames and Authy pairings. Unsupported fields are reported and stay in Bitwarden.
 4. Click **Transfer & verify**. The bridge connects to Instinct automatically. The bridge reads each stored credential back to verify it.
 5. Click **Quit** to close the local app and release loaded data. Keep Authy until real service logins have been checked.
 
@@ -34,13 +34,13 @@ Open the private link printed in the terminal. The app binds to `127.0.0.1`; the
 
 | Input | Supported today | Limits |
 | --- | --- | --- |
-| Bitwarden JSON | Names, usernames, passwords, embedded TOTP | UI explicitly offers credential-only transfer when other fields exist; strict CLI withholds such items |
+| Bitwarden JSON | Login titles, usernames, passwords, embedded TOTP, and a hostname from the first valid HTTP(S) site URL | The UI transfers credentials despite duplicate titles and reports other fields; strict CLI still withholds items with extra fields |
 | Password-protected Bitwarden JSON | PBKDF2-SHA256 and Argon2id decryption, authenticated AES-CBC | Bounded KDF workload; account-restricted export unsupported |
 | Authy | Guided iPhone capture or token JSON; local backup decryption; explicit pairing or standalone OTP entries | iOS trust/proxy settings need manual approval; actual phone extraction still unvalidated |
 | TOTP | SHA1, 6 digits, 30 seconds | Other algorithms/configurations are withheld |
-| Other vault content | Reported for review | Notes, URLs, cards, attachments, passkeys and organization metadata are not migrated |
+| Other vault content | Reported for review | Full URLs, notes, cards, attachments, passkeys and organization metadata are not migrated |
 
-Existing identical entries are verified and skipped. Different entries with the same name are left unchanged, including an existing login to which you are trying to add a new 2FA key. Import passwords and Authy together for automatic pairing. Duplicate source names require explicit resolution.
+The UI appends the site's **hostname** and a stable Bitwarden item ID to the Instinct entry name. Instinct's observed login schema has no URL field, so full URLs and browser autofill associations cannot be preserved. The original URL remains in Bitwarden. A later export can import newly added logins; previously imported IDs are verified and skipped even if their Bitwarden title changed. A changed password or 2FA key on an imported ID causes a conflict and is **not** silently overwritten. Conflicts leave that entry untouched while other selected accounts continue. A timeout or unverified write stops the batch. An identical entry imported by an earlier untagged bridge version is recognized by its exact title and credentials. Import passwords and Authy together for pairing. Live continuous sync is not provided: create a fresh Bitwarden export for later changes.
 
 ## Privacy and transfer behavior
 
