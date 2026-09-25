@@ -9,6 +9,7 @@
 - [x] Desktop/mobile visual checks, 51 unit tests and zero known dependency vulnerabilities in the checked environment.
 - [x] Linux standalone executable: demo, capture lifecycle and real synthetic Instinct transfer.
 - [x] One transfer button connects, writes, verifies and skips identical repeats.
+- [x] A second pass over the 462 existing real logins finished with 462 already present, zero created and zero conflicts.
 - [x] One-command source launcher; optional Authy controls; searchable, collapsed large-account review; visible transfer progress.
 - [x] Two same-title, same-site synthetic accounts retain distinct usernames/passwords, appear with readable labels, skip on repeat and clean up.
 - [x] Consumer UI keeps the main flow to file → review → transfer; encrypted password and optional details appear only when needed.
@@ -17,8 +18,8 @@
 - [ ] Compare migrated keys with codes in the actual Authy app and test real service logins.
 - [ ] Independently review security and confirm supported platforms.
 - [ ] Before calling it consumer-ready, test a fresh Windows and macOS install through real sign-in and transfer, document OS download warnings, and resolve the Brave-only prerequisite.
-- [ ] Enable and verify GitHub private vulnerability reporting when publishing.
-- [ ] Publish the repository and Linux preview release after reviewing the above limits.
+- [x] Enable and verify GitHub private vulnerability reporting.
+- [x] Publish the repository and Linux preview release with the limits above stated clearly.
 
 ## Draft X announcement (not posted)
 
