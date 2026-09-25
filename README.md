@@ -10,7 +10,7 @@ A local app with a simple browser interface for moving Bitwarden logins into Ins
 
 The app runs on your computer and opens in your browser. Sign in to [Instinct](https://app.instinct.com/vault) in Brave first. macOS, Windows and other browsers are not yet verified.
 
-For the Linux preview, download `InstinctBridge-linux-x86_64.tar.gz` from a [Desktop build](https://github.com/kabylesystem/instinct-bridge/actions/workflows/desktop.yml), extract it and open `InstinctBridge`. The archive preserves executable permissions; Python is not needed. GitHub wraps workflow artifacts in a ZIP, so extract that first. A direct download will be attached to the GitHub release when the repository is published. These are unsigned preview builds.
+For the Linux preview, download `InstinctBridge-linux-x86_64.tar.gz` from the [0.6.0 release](https://github.com/kabylesystem/instinct-bridge/releases/tag/v0.6.0), extract it and open `InstinctBridge`. The archive preserves executable permissions; Python is not needed. This is an unsigned preview build.
 
 1. Export a Bitwarden JSON file, open the app, and choose it. For encrypted exports, choose **Password protected** in Bitwarden; the app shows the password field when needed.
 2. Click **Review logins**, check the count, then **Transfer**. You can search or exclude individual accounts if needed.

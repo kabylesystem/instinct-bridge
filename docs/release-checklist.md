@@ -18,14 +18,8 @@
 - [ ] Independently review security and confirm supported platforms.
 - [ ] Before calling it consumer-ready, test a fresh Windows and macOS install through real sign-in and transfer, document OS download warnings, and resolve the Brave-only prerequisite.
 - [ ] Enable and verify GitHub private vulnerability reporting when publishing.
-- [ ] Publish the repository/release and the prepared announcement after reviewing the above limits.
+- [ ] Publish the repository and Linux preview release after reviewing the above limits.
 
-## Draft X announcement — not posted
+## Draft X announcement (not posted)
 
-Je construis Instinct Bridge : une app locale pour importer ses identifiants Bitwarden dans Instinct et y associer ses clés 2FA Authy.
-
-Exports chiffrés, sélection des comptes, vérification après transfert. Prototype testé sur Instinct avec des données fictives ; extraction Authy sur iPhone encore à valider.
-
-Code : https://github.com/kabylesystem/instinct-bridge
-
-The repository is currently private; do not announce it as publicly available yet.
+Je voulais éviter de ressaisir mes logins Bitwarden dans Instinct, alors j'ai fait un outil open source. Import local, aperçu avant transfert, vérification des comptes déjà présents. Preview Linux + Brave pour l'instant : https://github.com/kabylesystem/instinct-bridge
