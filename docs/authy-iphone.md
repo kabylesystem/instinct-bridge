@@ -6,7 +6,7 @@ Once a usable token export is available, Instinct Bridge decrypts it locally, su
 
 ## Guided iPhone capture (experimental)
 
-[Twilio's consumer documentation](https://help.twilio.com/hc/en-us/articles/19753420684059-Export-or-Import-Tokens-in-the-Authy-app-Not-Supported) says Authy has no in-app import/export. Instinct Bridge implements a local capture based on the inspected [upstream format and sync trigger](https://github.com/valentin-dirken/authy-export/tree/074d46069f827264b58c0ee0737bdb9fe0d07da5). **The transport and parser pass synthetic tests; extraction from a real Authy iPhone remains unvalidated.** USB pairing succeeded on iOS 26.6.1 / Authy 28.6.2, but app storage access was refused. USB trust alone does not export the keys.
+[Twilio's consumer documentation](https://help.twilio.com/hc/en-us/articles/19753420684059-Export-or-Import-Tokens-in-the-Authy-app-Not-Supported) says Authy has no in-app import/export. Instinct Bridge implements a local capture based on the inspected [upstream format and sync trigger](https://github.com/valentin-dirken/authy-export/tree/074d46069f827264b58c0ee0737bdb9fe0d07da5). **The transport and parser pass synthetic tests; extraction from a real Authy iPhone remains unvalidated.** USB pairing succeeded during testing, but app storage access was refused. USB trust alone does not export the keys.
 
 1. Put the computer and iPhone on the same trusted Wi-Fi. A phone providing the computer's hotspot is not the verified setup.
 2. In the local app, click **Connect Authy on iPhone**. Scan the QR code with the iPhone and download its uniquely named **Instinct Bridge** profile.

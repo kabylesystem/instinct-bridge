@@ -12,8 +12,6 @@
   "desktop_and_mobile_review": true,
   "binary_sha256": "fc68912af1809a2e96b95ebb4c0b8ce5fc34f4bc3cdd50a659e6884627e48b03",
   "iphone": {
-    "ios": "26.6.1",
-    "authy": "28.6.2",
     "usb_pairing_verified": true,
     "sandbox_access": "InstallationLookupFailed",
     "keys_received": 0,

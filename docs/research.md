@@ -54,7 +54,7 @@ The integrated proxy uses mitmproxy events to reject unpaired clients and any up
 
 The inspected stable mitmproxy 12.2.3 dependency set produced vulnerability findings in cryptography, h2, msgpack and tornado. The iPhone extra instead pins inspected upstream [commit b506c68](https://github.com/mitmproxy/mitmproxy/tree/b506c68108e287104045333ade476d92c39c275e), whose updated bounds permit the checked fixes. The clean packaging environment audit returned zero known findings for recognized versions. It skipped the unpublished mitmproxy 13.0.0.dev0 snapshot and this local project, so it does not establish their advisory status or provide an independent security audit.
 
-The Linux executable passed a live synthetic Instinct transfer, independent read-back, identical repeat and cleanup. The final rebuild additionally passed desktop/mobile UI and capture-start/quit/closed-port checks. USB pairing on iOS 26.6.1 succeeded; Authy 28.6.2 sandbox access returned InstallationLookupFailed. No Authy keys were received. A capture session expired, and its temporary firewall rules were removed; no bridge profile was present in the installed-profile query.
+The Linux executable passed a live synthetic Instinct transfer, independent read-back, identical repeat and cleanup. The final rebuild additionally passed desktop/mobile UI and capture-start/quit/closed-port checks. USB pairing succeeded; Authy sandbox access returned InstallationLookupFailed. No Authy keys were received. A capture session expired, and its temporary firewall rules were removed; no bridge profile was present in the installed-profile query.
 
 ## Full-vault target capability check — 2026-09-25
 
@@ -68,7 +68,7 @@ The 2026-09-25 local live test did import one strictly supported login item and 
 
 The observed Instinct login kind has no URL subfield. The bridge therefore extracts only a validated HTTP(S) hostname from Bitwarden `login.uris` for the destination name; URL paths, queries and fragments are not copied into that name. A stable marker based on each Bitwarden item UUID separates duplicate titles and permits idempotent reimports. Existing records with that marker are read back; identical records are skipped, changed records conflict. A legacy unmarked record is skipped only when its title and stored credentials match exactly. No live sync or automatic password update is claimed.
 
-A local dry-run of the user's export admitted every login without writing any of them. A separate live synthetic run created two same-title records with different hostnames/IDs, verified repeat skips, and deleted both test records. The UI synthetic E2E checked single-click creation, independent readback, repeat skip, desktop/mobile layout and cleanup. Authy extraction from the actual iPhone is still unvalidated.
+A local dry-run of a private export admitted every login without writing any of them. A separate live synthetic run created two same-title records with different hostnames/IDs, verified repeat skips, and deleted both test records. The UI synthetic E2E checked single-click creation, independent readback, repeat skip, desktop/mobile layout and cleanup. Authy extraction from an actual iPhone is still unvalidated.
 
 ## Empty-field readback — Preview 0.4.1
 
