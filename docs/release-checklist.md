@@ -16,6 +16,7 @@
 - [ ] Validate initial extraction against a real Authy iPhone.
 - [ ] Compare migrated keys with codes in the actual Authy app and test real service logins.
 - [ ] Independently review security and confirm supported platforms.
+- [ ] Before calling it consumer-ready, test a fresh Windows and macOS install through real sign-in and transfer, document OS download warnings, and resolve the Brave-only prerequisite.
 - [ ] Enable and verify GitHub private vulnerability reporting when publishing.
 - [ ] Publish the repository/release and the prepared announcement after reviewing the above limits.
 

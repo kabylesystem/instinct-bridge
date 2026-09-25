@@ -12,8 +12,8 @@ Bitwarden distinguishes password-protected encrypted exports from account-restri
 
 ## Release path
 
-1. **Current preview:** Linux x86_64 + Brave. CI builds a standalone executable and a tar.gz archive whose executable permission is preserved. Synthetic end-to-end checks and a real login migration were performed. Other platforms and browsers are not claimed.
+1. **Current preview:** Linux x86_64 + Brave. CI builds a standalone executable and a tar.gz archive whose executable permission is preserved. Synthetic end-to-end checks and a real login migration were performed. This can be used without development tools, but downloading an archive and signing in through Brave still creates friction for nontechnical users. Other platforms and browsers are not claimed.
 2. **Public GitHub release:** attach the archive and SHA-256 checksums directly to a release, so users do not need to find a CI artifact or install Python. Keep the code, install instructions, exact supported scope and synthetic evidence in the repository.
-3. **Broader support:** verify macOS, Windows and other browsers independently; validate Authy extraction on a real iPhone; arrange an independent security review before advertising general-purpose vault migration.
+3. **Broader support:** build and test app downloads on clean macOS and Windows machines, including real Instinct sign-in and transfer, OS download warnings, and the path for users who do not already use Brave. Do not infer working imports from a successful build alone. Validate Authy extraction on a real iPhone and arrange an independent security review before advertising general-purpose vault migration.
 
 The GitHub repository remains private until Kusaila approves publication. No Vercel deployment is needed for the importer.
