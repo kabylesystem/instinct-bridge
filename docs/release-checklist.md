@@ -9,7 +9,7 @@
 - [x] Desktop/mobile visual checks, 51 unit tests and zero known dependency vulnerabilities in the checked environment.
 - [x] Linux standalone executable: demo, capture lifecycle and real synthetic Instinct transfer.
 - [x] One transfer button connects, writes, verifies and skips identical repeats.
-- [x] A second pass over the 462 existing real logins finished with 462 already present, zero created and zero conflicts.
+- [x] A second pass over the already migrated logins finished with all entries verified as already present, zero created and zero conflicts.
 - [x] One-command source launcher; optional Authy controls; searchable, collapsed large-account review; visible transfer progress.
 - [x] Two same-title, same-site synthetic accounts retain distinct usernames/passwords, appear with readable labels, skip on repeat and clean up.
 - [x] Consumer UI keeps the main flow to file → review → transfer; encrypted password and optional details appear only when needed.
@@ -19,6 +19,7 @@
 - [ ] Independently review security and confirm supported platforms.
 - [ ] Before calling it consumer-ready, test a fresh Windows and macOS install through real sign-in and transfer, document OS download warnings, and resolve the Brave-only prerequisite.
 - [x] Enable and verify GitHub private vulnerability reporting.
+- [x] Scan tracked history, screenshots and evidence for exposed credentials; enable GitHub secret scanning and push protection.
 - [x] Publish the repository and Linux preview release with the limits above stated clearly.
 
 ## Draft X announcement (not posted)

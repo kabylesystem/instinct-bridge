@@ -31,4 +31,4 @@ Exports are processed locally. The selected destination is the user's authentica
 
 ## Reporting issues
 
-Never attach a real vault, password, TOTP seed, backup, HAR, or session cookie to an issue. Use synthetic reproductions and sanitized technical details. A private vulnerability-reporting channel must be configured and verified before public release.
+Never attach a real vault, password, TOTP seed, backup, HAR, or session cookie to an issue. Use synthetic reproductions and sanitized technical details. Report security issues through [GitHub's private vulnerability channel](https://github.com/kabylesystem/instinct-bridge/security/advisories), which is enabled for this public repository.
